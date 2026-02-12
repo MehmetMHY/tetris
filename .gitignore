@@ -4,3 +4,4 @@ venv/
 env/
 .claude/
 ch_*
+.tmp/
