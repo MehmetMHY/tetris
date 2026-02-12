@@ -192,6 +192,10 @@
       <div class="value" id="lines">0</div>
     </div>
     <div class="panel-box">
+      <h3>Best</h3>
+      <div class="value" id="high-score">0</div>
+    </div>
+    <div class="panel-box">
       <h3>Hold</h3>
       <canvas id="hold-canvas" width="100" height="60"></canvas>
     </div>
@@ -246,7 +250,9 @@
   <div class="overlay-content">
     <h2>GAME OVER</h2>
     <p class="final-score" id="final-score"></p>
-    <p class="prompt">Press any key to restart</p>
+    <p class="final-score" id="final-best" style="color:#aaa;font-size:18px;"></p>
+    <p id="new-best" style="color:#f0c000;font-size:20px;font-weight:bold;display:none;">NEW HIGH SCORE!</p>
+    <p class="prompt">Press any key to restart &middot; Esc to quit</p>
   </div>
 </div>
 
@@ -347,6 +353,31 @@
   const SOFT_DROP_SCORE = 1;
   const HARD_DROP_SCORE = 2;
 
+  // NES-inspired speed curve (ms per drop). Each level is noticeably faster.
+  const LEVEL_SPEEDS = [
+    800,  // Level 1
+    650,  // Level 2
+    500,  // Level 3
+    370,  // Level 4
+    280,  // Level 5
+    200,  // Level 6
+    150,  // Level 7
+    115,  // Level 8
+     85,  // Level 9
+     65,  // Level 10
+     50,  // Level 11
+     40,  // Level 12
+     33,  // Level 13
+     28,  // Level 14
+     23,  // Level 15
+     18,  // Level 16+  "kill screen"
+  ];
+
+  function getSpeed(lvl) {
+    const idx = Math.min(lvl - 1, LEVEL_SPEEDS.length - 1);
+    return LEVEL_SPEEDS[idx];
+  }
+
   // ─── DOM ───
   const boardCanvas = document.getElementById('board');
   const ctx = boardCanvas.getContext('2d');
@@ -361,6 +392,12 @@
   const pauseOverlay = document.getElementById('pause-overlay');
   const gameoverOverlay = document.getElementById('gameover-overlay');
   const finalScoreEl = document.getElementById('final-score');
+  const finalBestEl = document.getElementById('final-best');
+  const newBestEl = document.getElementById('new-best');
+  const highScoreEl = document.getElementById('high-score');
+
+  let highScore = parseInt(localStorage.getItem('tetris-high-score')) || 0;
+  highScoreEl.textContent = highScore;
 
   // ─── Game state ───
   let board, score, lines, level, gameOver, paused, started;
@@ -447,7 +484,7 @@
       lines += count;
       score += LINE_SCORES[count] * level;
       level = Math.floor(lines / 10) + 1;
-      dropInterval = Math.max(50, 1000 - (level - 1) * 80);
+      dropInterval = getSpeed(level);
       updateUI();
       animatingLines = null;
       holdUsed = false;
@@ -464,6 +501,8 @@
     currentY = -1;
     lockTimer = 0;
     lockMoves = 0;
+    dropInterval = getSpeed(level);
+    dropTimer = 0;
 
     if (collides(current, currentX, currentY)) {
       // Try one row up
@@ -478,7 +517,15 @@
   function triggerGameOver() {
     gameOver = true;
     cancelAnimationFrame(rafId);
+    const isNewBest = score > 0 && score >= highScore;
+    if (score > highScore) {
+      highScore = score;
+      highScoreEl.textContent = highScore;
+    }
+    localStorage.setItem('tetris-high-score', highScore);
     finalScoreEl.textContent = `Score: ${score}`;
+    finalBestEl.textContent = `Best: ${highScore}`;
+    newBestEl.style.display = isNewBest ? 'block' : 'none';
     gameoverOverlay.classList.remove('hidden');
   }
 
@@ -705,6 +752,10 @@
     scoreEl.textContent = score;
     levelEl.textContent = level;
     linesEl.textContent = lines;
+    if (score > highScore) {
+      highScore = score;
+      highScoreEl.textContent = highScore;
+    }
   }
 
   // ─── DAS / Auto-repeat ───
@@ -807,7 +858,7 @@
         break;
       case 'ArrowDown':
         keys['down'] = false;
-        dropInterval = Math.max(50, 1000 - (level - 1) * 80);
+        dropInterval = getSpeed(level);
         break;
     }
   });
@@ -905,7 +956,7 @@
     holdUsed = false;
     bag = shuffledBag();
     nextType = nextPiece();
-    dropInterval = 1000;
+    dropInterval = getSpeed(1);
     dropTimer = 0;
     lockTimer = 0;
     lockMoves = 0;
