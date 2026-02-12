@@ -626,6 +626,11 @@
           return LEVEL_SPEEDS[idx];
         }
 
+        function getLockDelay(lvl) {
+          // Scale lock delay with level: 500ms at level 1, down to 150ms at level 15+
+          return Math.max(150, 500 - (lvl - 1) * 25);
+        }
+
         // ─── DOM ───
         const boardCanvas = document.getElementById("board");
         const ctx = boardCanvas.getContext("2d");
@@ -1214,11 +1219,13 @@
 
           // Check if piece is on ground
           const shape = getShape(currentType, currentRotation);
-          const onGround = collides(shape, currentX, currentY + 1);
+          let onGround = collides(shape, currentX, currentY + 1);
 
+          // Lock delay scaled by level
+          const lockDelay = getLockDelay(level);
           if (onGround) {
             lockTimer += delta;
-            if (lockTimer >= 500) {
+            if (lockTimer >= lockDelay) {
               lockPiece();
               dropTimer = 0;
             }
@@ -1228,13 +1235,22 @@
 
           const dropInterval = keys["down"] ? 50 : getSpeed(level);
 
-          if (dropTimer >= dropInterval && !onGround) {
+          // Gravity catch-up: move multiple rows if needed for consistent drop speed
+          while (dropTimer >= dropInterval && !onGround) {
             dropTimer -= dropInterval;
+
+            // Recompute onGround since state changes as we move
+            const shape2 = getShape(currentType, currentRotation);
+            onGround = collides(shape2, currentX, currentY + 1);
+            if (onGround) break;
+
             if (moveDown()) {
               if (keys["down"]) {
                 score += SOFT_DROP_SCORE;
                 updateUI();
               }
+            } else {
+              break;
             }
           }
 
