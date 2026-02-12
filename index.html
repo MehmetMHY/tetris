@@ -476,10 +476,16 @@
 
     // Flash then remove, spawn AFTER clearing is done
     setTimeout(() => {
-      for (const r of full.sort((a, b) => b - a)) {
+      // Remove lines first (must be descending to keep indices valid)
+      full.sort((a, b) => b - a);
+      for (const r of full) {
         board.splice(r, 1);
+      }
+      // Add new lines at the top
+      for (let i = 0; i < full.length; i++) {
         board.unshift(new Array(COLS).fill(EMPTY));
       }
+      
       const count = full.length;
       lines += count;
       score += LINE_SCORES[count] * level;
@@ -505,10 +511,8 @@
     dropTimer = 0;
 
     if (collides(current, currentX, currentY)) {
-      // Try one row up
-      if (collides(current, currentX, currentY - 1)) {
-        triggerGameOver();
-      }
+      triggerGameOver();
+      return;
     }
     drawNext();
     drawHold();
@@ -681,7 +685,12 @@
       for (let c = 0; c < COLS; c++) {
         if (board[r][c] !== EMPTY) {
           const flash = animatingLines && animatingLines.includes(r);
-          if (!flash) drawBlock(ctx, c, r, board[r][c]);
+          if (flash) {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(c * BLOCK, r * BLOCK, BLOCK, BLOCK);
+          } else {
+            drawBlock(ctx, c, r, board[r][c]);
+          }
         }
       }
     }
@@ -821,10 +830,6 @@
           keys['down'] = true;
           dropInterval = 50;
         }
-        if (moveDown()) {
-          score += SOFT_DROP_SCORE;
-          updateUI();
-        }
         break;
       case 'ArrowUp':
       case 'KeyX':
@@ -936,8 +941,13 @@
     }
 
     if (dropTimer >= dropInterval && !onGround) {
-      dropTimer = 0;
-      moveDown();
+      dropTimer -= dropInterval;
+      if (moveDown()) {
+        if (keys['down']) {
+          score += SOFT_DROP_SCORE;
+          updateUI();
+        }
+      }
     }
 
     drawBoard();
