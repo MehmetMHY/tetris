@@ -145,6 +145,33 @@
     50% { opacity: 0; }
     100% { opacity: 1; }
   }
+
+  .menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+    align-items: center;
+  }
+
+  .menu-btn {
+    background: #2a2a4e;
+    color: #fff;
+    border: 2px solid #555;
+    border-radius: 6px;
+    padding: 10px 32px;
+    font-size: 16px;
+    font-family: inherit;
+    cursor: pointer;
+    width: 180px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .menu-btn:hover, .menu-btn:focus {
+    background: #3a3a6e;
+    border-color: #88f;
+    outline: none;
+  }
 </style>
 </head>
 <body>
@@ -189,7 +216,7 @@
       <kbd>&uarr;</kbd> / <kbd>X</kbd> Rotate CW<br>
       <kbd>Z</kbd> Rotate CCW<br>
       <kbd>C</kbd> Hold<br>
-      <kbd>P</kbd> Pause
+      <kbd>Esc</kbd> / <kbd>P</kbd> Pause
     </div>
   </div>
 </div>
@@ -206,7 +233,11 @@
 <div class="overlay hidden" id="pause-overlay">
   <div class="overlay-content">
     <h2>PAUSED</h2>
-    <p class="prompt">Press P to resume</p>
+    <div class="menu-buttons">
+      <button class="menu-btn" id="btn-resume">Resume</button>
+      <button class="menu-btn" id="btn-restart">Restart</button>
+      <button class="menu-btn" id="btn-quit">Quit</button>
+    </div>
   </div>
 </div>
 
@@ -391,8 +422,6 @@
       }
     }
     clearLines();
-    holdUsed = false;
-    spawn();
   }
 
   function clearLines() {
@@ -400,11 +429,15 @@
     for (let r = 0; r < ROWS; r++) {
       if (board[r].every(c => c !== EMPTY)) full.push(r);
     }
-    if (full.length === 0) return;
+    if (full.length === 0) {
+      holdUsed = false;
+      spawn();
+      return;
+    }
 
     animatingLines = full;
 
-    // Flash then remove
+    // Flash then remove, spawn AFTER clearing is done
     setTimeout(() => {
       for (const r of full.sort((a, b) => b - a)) {
         board.splice(r, 1);
@@ -417,6 +450,8 @@
       dropInterval = Math.max(50, 1000 - (level - 1) * 80);
       updateUI();
       animatingLines = null;
+      holdUsed = false;
+      spawn();
     }, 200);
   }
 
@@ -704,19 +739,21 @@
     }
 
     if (gameOver) {
-      if (e.code !== 'KeyP') {
+      if (e.code === 'Escape') {
+        quitToTitle();
+      } else if (e.code !== 'KeyP') {
         gameoverOverlay.classList.add('hidden');
         startGame();
       }
       return;
     }
 
-    if (e.code === 'KeyP') {
+    if (e.code === 'KeyP' || e.code === 'Escape') {
       togglePause();
       return;
     }
 
-    if (paused) return;
+    if (paused || animatingLines) return;
 
     switch (e.code) {
       case 'ArrowLeft':
@@ -784,6 +821,39 @@
       lastTime = performance.now();
     }
   }
+
+  function resumeGame() {
+    if (!paused) return;
+    paused = false;
+    pauseOverlay.classList.add('hidden');
+    lastTime = performance.now();
+  }
+
+  function quitToTitle() {
+    paused = false;
+    gameOver = false;
+    started = false;
+    cancelAnimationFrame(rafId);
+    pauseOverlay.classList.add('hidden');
+    gameoverOverlay.classList.add('hidden');
+    startOverlay.classList.remove('hidden');
+    ctx.fillStyle = '#111122';
+    ctx.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
+    drawPreview(nctx, nextCanvas, null);
+    drawPreview(hctx, holdCanvas, null);
+    scoreEl.textContent = '0';
+    levelEl.textContent = '1';
+    linesEl.textContent = '0';
+  }
+
+  // Pause menu buttons
+  document.getElementById('btn-resume').addEventListener('click', resumeGame);
+  document.getElementById('btn-restart').addEventListener('click', () => {
+    pauseOverlay.classList.add('hidden');
+    paused = false;
+    startGame();
+  });
+  document.getElementById('btn-quit').addEventListener('click', quitToTitle);
 
   // ─── Game loop ───
   function gameLoop(time) {
