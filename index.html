@@ -328,28 +328,42 @@
         // ─── Audio Setup ───
         const audioEl = document.getElementById("background-audio");
         const muteBtn = document.getElementById("mute-btn");
+        let audioStarted = false;
+        let muted = localStorage.getItem("tetris-muted") === "true";
 
-        function updateMuteButton() {
-          const isMuted = localStorage.getItem("tetris-muted") === "true";
-          if (isMuted) {
-            muteBtn.textContent = "🔇 Muted";
+        function applyMute() {
+          audioEl.muted = muted;
+          audioEl.volume = muted ? 0 : 1;
+          muteBtn.textContent = muted ? "🔇 Muted" : "🔊 Unmute";
+          if (muted) {
             muteBtn.classList.add("muted");
-            audioEl.pause();
           } else {
-            muteBtn.textContent = "🔊 Unmute";
             muteBtn.classList.remove("muted");
-            audioEl.play().catch(() => {});
+          }
+        }
+
+        function startAudio() {
+          if (!audioStarted) {
+            applyMute();
+            audioEl
+              .play()
+              .then(() => {
+                audioStarted = true;
+                applyMute();
+              })
+              .catch(() => {});
           }
         }
 
         function toggleMute() {
-          const isMuted = localStorage.getItem("tetris-muted") === "true";
-          localStorage.setItem("tetris-muted", !isMuted);
-          updateMuteButton();
+          muted = !muted;
+          localStorage.setItem("tetris-muted", muted ? "true" : "false");
+          applyMute();
+          startAudio();
         }
 
         muteBtn.addEventListener("click", toggleMute);
-        updateMuteButton();
+        applyMute();
 
         // ─── Constants ───
         const COLS = 10;
@@ -842,6 +856,7 @@
           finalBestEl.textContent = `Best: ${highScore}`;
           newBestEl.style.display = isNewBest ? "block" : "none";
           gameoverOverlay.classList.remove("hidden");
+          applyMute();
         }
 
         function ghostY() {
@@ -1135,6 +1150,13 @@
 
         // ─── Input ───
         document.addEventListener("keydown", (e) => {
+          // Allow mute toggle in any state
+          if (e.code === "KeyM") {
+            e.preventDefault();
+            toggleMute();
+            return;
+          }
+
           if (!started) {
             startGame();
             return;
@@ -1191,10 +1213,6 @@
               e.preventDefault();
               holdPiece();
               break;
-            case "KeyM":
-              e.preventDefault();
-              toggleMute();
-              break;
           }
         });
 
@@ -1244,6 +1262,7 @@
           scoreEl.textContent = "0";
           levelEl.textContent = "1";
           linesEl.textContent = "0";
+          applyMute();
         }
 
         // Pause menu buttons
@@ -1337,7 +1356,8 @@
           gameoverOverlay.classList.add("hidden");
           pauseOverlay.classList.add("hidden");
 
-          updateMuteButton();
+          applyMute();
+          startAudio();
           updateUI();
           spawn();
 
