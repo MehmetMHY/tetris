@@ -196,9 +196,33 @@
         border-color: #88f;
         outline: none;
       }
+
+      .mute-btn {
+        width: 100%;
+        background: #2a2a4e;
+        color: #fff;
+        border: 2px solid #555;
+        border-radius: 6px;
+        padding: 10px;
+        font-size: 14px;
+        font-family: inherit;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+
+      .mute-btn:hover,
+      .mute-btn:focus {
+        background: #3a3a6e;
+        outline: none;
+      }
     </style>
   </head>
   <body>
+    <audio id="background-audio" loop>
+      <source src="NmCCQxVBfyM.mp3" type="audio/mpeg" />
+    </audio>
     <div class="game-container">
       <!-- Left panel -->
       <div class="side-panel">
@@ -247,8 +271,10 @@
           <kbd>&uarr;</kbd> / <kbd>X</kbd> Rotate CW<br />
           <kbd>Z</kbd> Rotate CCW<br />
           <kbd>C</kbd> Hold<br />
+          <kbd>M</kbd> Mute/Unmute<br />
           <kbd>Esc</kbd> / <kbd>P</kbd> Pause
         </div>
+        <button class="mute-btn" id="mute-btn">🔊 Unmute</button>
       </div>
     </div>
 
@@ -299,6 +325,32 @@
 
     <script>
       (() => {
+        // ─── Audio Setup ───
+        const audioEl = document.getElementById("background-audio");
+        const muteBtn = document.getElementById("mute-btn");
+        let isMuted = localStorage.getItem("tetris-muted") === "true";
+
+        function updateMuteButton() {
+          if (isMuted) {
+            muteBtn.textContent = "🔇 Muted";
+            muteBtn.classList.add("muted");
+            audioEl.pause();
+          } else {
+            muteBtn.textContent = "🔊 Unmute";
+            muteBtn.classList.remove("muted");
+            audioEl.play();
+          }
+        }
+
+        function toggleMute() {
+          isMuted = !isMuted;
+          localStorage.setItem("tetris-muted", isMuted);
+          updateMuteButton();
+        }
+
+        muteBtn.addEventListener("click", toggleMute);
+        updateMuteButton();
+
         // ─── Constants ───
         const COLS = 10;
         const ROWS = 20;
@@ -1138,6 +1190,10 @@
             case "ShiftRight":
               e.preventDefault();
               holdPiece();
+              break;
+            case "KeyM":
+              e.preventDefault();
+              toggleMute();
               break;
           }
         });
