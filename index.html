@@ -328,9 +328,9 @@
         // ─── Audio Setup ───
         const audioEl = document.getElementById("background-audio");
         const muteBtn = document.getElementById("mute-btn");
-        let isMuted = localStorage.getItem("tetris-muted") === "true";
 
         function updateMuteButton() {
+          const isMuted = localStorage.getItem("tetris-muted") === "true";
           if (isMuted) {
             muteBtn.textContent = "🔇 Muted";
             muteBtn.classList.add("muted");
@@ -338,13 +338,13 @@
           } else {
             muteBtn.textContent = "🔊 Unmute";
             muteBtn.classList.remove("muted");
-            audioEl.play();
+            audioEl.play().catch(() => {});
           }
         }
 
         function toggleMute() {
-          isMuted = !isMuted;
-          localStorage.setItem("tetris-muted", isMuted);
+          const isMuted = localStorage.getItem("tetris-muted") === "true";
+          localStorage.setItem("tetris-muted", !isMuted);
           updateMuteButton();
         }
 
