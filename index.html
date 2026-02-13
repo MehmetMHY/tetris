@@ -362,7 +362,10 @@
           startAudio();
         }
 
-        muteBtn.addEventListener("click", toggleMute);
+        muteBtn.addEventListener("click", () => {
+          muteBtn.blur();
+          toggleMute();
+        });
         applyMute();
 
         // ─── Constants ───
