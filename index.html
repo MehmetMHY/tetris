@@ -1144,7 +1144,7 @@
           dasActive[key] = true;
           dasTimer[key] = setTimeout(() => {
             dasTimer[key] = setInterval(() => {
-              if (!paused && !gameOver && started) action();
+              if (!paused && !gameOver && started && !animatingLines) action();
             }, DAS_REPEAT);
           }, DAS_DELAY);
         }
@@ -1187,7 +1187,9 @@
           if (paused) {
             if (e.code === "ArrowUp") {
               e.preventDefault();
-              pauseMenuIdx = (pauseMenuIdx - 1 + pauseMenuBtns.length) % pauseMenuBtns.length;
+              pauseMenuIdx =
+                (pauseMenuIdx - 1 + pauseMenuBtns.length) %
+                pauseMenuBtns.length;
               highlightPauseBtn();
             } else if (e.code === "ArrowDown") {
               e.preventDefault();
@@ -1345,7 +1347,12 @@
             lockTimer = 0;
           }
 
-          const dropInterval = keys["down"] ? 50 : getSpeed(level);
+          const dropInterval = keys["down"]
+            ? Math.min(50, getSpeed(level))
+            : getSpeed(level);
+
+          // Cap accumulated time to prevent massive catch-up after frame hitches
+          dropTimer = Math.min(dropTimer, dropInterval * ROWS);
 
           // Gravity catch-up: move multiple rows if needed for consistent drop speed
           while (dropTimer >= dropInterval && !onGround) {
