@@ -191,7 +191,8 @@
       }
 
       .menu-btn:hover,
-      .menu-btn:focus {
+      .menu-btn:focus,
+      .menu-btn.selected {
         background: #3a3a6e;
         border-color: #88f;
         outline: none;
@@ -385,6 +386,78 @@
         };
 
         const GHOST_ALPHA = 0.25;
+        const PREVIEW_BLOCK = 20;
+
+        // ─── Pre-rendered block sprites (1 drawImage vs 6 draw calls per block) ───
+        const blockSprites = {};
+        const ghostSprites = {};
+        const previewSprites = {};
+        (function buildSprites() {
+          function boardSprite(colorId, alpha) {
+            const c = document.createElement("canvas");
+            c.width = BLOCK;
+            c.height = BLOCK;
+            const x = c.getContext("2d");
+            x.globalAlpha = alpha;
+            x.fillStyle = COLORS[colorId];
+            x.fillRect(0, 0, BLOCK, BLOCK);
+            x.fillStyle = "rgba(255,255,255,0.2)";
+            x.fillRect(0, 0, BLOCK, 2);
+            x.fillRect(0, 0, 2, BLOCK);
+            x.fillStyle = "rgba(0,0,0,0.25)";
+            x.fillRect(BLOCK - 2, 0, 2, BLOCK);
+            x.fillRect(0, BLOCK - 2, BLOCK, 2);
+            x.strokeStyle = "rgba(0,0,0,0.4)";
+            x.lineWidth = 1;
+            x.strokeRect(0.5, 0.5, BLOCK - 1, BLOCK - 1);
+            return c;
+          }
+          function prevSprite(colorId) {
+            const s = PREVIEW_BLOCK;
+            const c = document.createElement("canvas");
+            c.width = s;
+            c.height = s;
+            const x = c.getContext("2d");
+            x.fillStyle = COLORS[colorId];
+            x.fillRect(0, 0, s, s);
+            x.strokeStyle = "rgba(0,0,0,0.4)";
+            x.lineWidth = 1;
+            x.strokeRect(0.5, 0.5, s - 1, s - 1);
+            x.fillStyle = "rgba(255,255,255,0.15)";
+            x.fillRect(0, 0, s, 2);
+            x.fillRect(0, 0, 2, s);
+            return c;
+          }
+          for (let id = 1; id <= 7; id++) {
+            blockSprites[id] = boardSprite(id, 1);
+            ghostSprites[id] = boardSprite(id, GHOST_ALPHA);
+            previewSprites[id] = prevSprite(id);
+          }
+        })();
+
+        // ─── Pre-rendered background + grid (drawn once, blitted each frame) ───
+        const bgCanvas = document.createElement("canvas");
+        bgCanvas.width = COLS * BLOCK;
+        bgCanvas.height = ROWS * BLOCK;
+        (function buildBg() {
+          const g = bgCanvas.getContext("2d");
+          g.fillStyle = "#111122";
+          g.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+          g.strokeStyle = "rgba(255,255,255,0.03)";
+          g.lineWidth = 1;
+          for (let r = 0; r <= ROWS; r++) {
+            g.beginPath();
+            g.moveTo(0, r * BLOCK);
+            g.lineTo(COLS * BLOCK, r * BLOCK);
+            g.stroke();
+          }
+          for (let c = 0; c <= COLS; c++) {
+            g.beginPath();
+            g.moveTo(c * BLOCK, 0);
+            g.lineTo(c * BLOCK, ROWS * BLOCK);
+            g.stroke();
+          }
+        })();
 
         // Tetromino shapes (each rotation state)
         const SHAPES = {
@@ -708,6 +781,9 @@
         const nctx = nextCanvas.getContext("2d");
         const holdCanvas = document.getElementById("hold-canvas");
         const hctx = holdCanvas.getContext("2d");
+        ctx.imageSmoothingEnabled = false;
+        nctx.imageSmoothingEnabled = false;
+        hctx.imageSmoothingEnabled = false;
         const scoreEl = document.getElementById("score");
         const levelEl = document.getElementById("level");
         const speedEl = document.getElementById("speed-display");
@@ -969,61 +1045,22 @@
         }
 
         // ─── Drawing ───
-        function drawBlock(context, x, y, colorId, alpha = 1) {
-          const color = COLORS[colorId];
-          context.globalAlpha = alpha;
-          context.fillStyle = color;
-          context.fillRect(x * BLOCK, y * BLOCK, BLOCK, BLOCK);
-
-          // Highlight
-          context.fillStyle = "rgba(255,255,255,0.2)";
-          context.fillRect(x * BLOCK, y * BLOCK, BLOCK, 2);
-          context.fillRect(x * BLOCK, y * BLOCK, 2, BLOCK);
-
-          // Shadow
-          context.fillStyle = "rgba(0,0,0,0.25)";
-          context.fillRect(x * BLOCK + BLOCK - 2, y * BLOCK, 2, BLOCK);
-          context.fillRect(x * BLOCK, y * BLOCK + BLOCK - 2, BLOCK, 2);
-
-          // Border
-          context.strokeStyle = "rgba(0,0,0,0.4)";
-          context.lineWidth = 1;
-          context.strokeRect(
-            x * BLOCK + 0.5,
-            y * BLOCK + 0.5,
-            BLOCK - 1,
-            BLOCK - 1,
+        function drawBlock(context, x, y, colorId, ghost) {
+          context.drawImage(
+            ghost ? ghostSprites[colorId] : blockSprites[colorId],
+            (x * BLOCK) | 0,
+            (y * BLOCK) | 0,
           );
-
-          context.globalAlpha = 1;
         }
 
         function drawBoard() {
-          ctx.fillStyle = "#111122";
-          ctx.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
-
-          // Grid lines
-          ctx.strokeStyle = "rgba(255,255,255,0.03)";
-          ctx.lineWidth = 1;
-          for (let r = 0; r <= ROWS; r++) {
-            ctx.beginPath();
-            ctx.moveTo(0, r * BLOCK);
-            ctx.lineTo(COLS * BLOCK, r * BLOCK);
-            ctx.stroke();
-          }
-          for (let c = 0; c <= COLS; c++) {
-            ctx.beginPath();
-            ctx.moveTo(c * BLOCK, 0);
-            ctx.lineTo(c * BLOCK, ROWS * BLOCK);
-            ctx.stroke();
-          }
+          ctx.drawImage(bgCanvas, 0, 0);
 
           // Locked pieces
           for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
               if (board[r][c] !== EMPTY) {
-                const flash = animatingLines && animatingLines.includes(r);
-                if (flash) {
+                if (animatingLines && animatingLines.includes(r)) {
                   ctx.fillStyle = "#fff";
                   ctx.fillRect(c * BLOCK, r * BLOCK, BLOCK, BLOCK);
                 } else {
@@ -1035,25 +1072,17 @@
 
           if (gameOver || !currentType) return;
 
-          // Ghost piece
+          // Ghost + current piece (single pass)
           const gy = ghostY();
           const shape = getShape(currentType, currentRotation);
           for (let r = 0; r < shape.length; r++) {
-            for (let c = 0; c < shape[r].length; c++) {
-              if (shape[r][c] !== 0) {
-                const py = gy + r;
-                if (py >= 0)
-                  drawBlock(ctx, currentX + c, py, shape[r][c], GHOST_ALPHA);
-              }
-            }
-          }
-
-          // Current piece
-          for (let r = 0; r < shape.length; r++) {
-            for (let c = 0; c < shape[r].length; c++) {
-              if (shape[r][c] !== 0) {
+            const row = shape[r];
+            for (let c = 0; c < row.length; c++) {
+              if (row[c] !== 0) {
+                const gpy = gy + r;
+                if (gpy >= 0) drawBlock(ctx, currentX + c, gpy, row[c], true);
                 const py = currentY + r;
-                if (py >= 0) drawBlock(ctx, currentX + c, py, shape[r][c]);
+                if (py >= 0) drawBlock(ctx, currentX + c, py, row[c]);
               }
             }
           }
@@ -1067,41 +1096,16 @@
           const shape = getShape(type, 0);
           const rows = shape.length;
           const cols = shape[0].length;
-          const previewBlock = 20;
-          const ox = Math.floor((canvas.width - cols * previewBlock) / 2);
-          const oy = Math.floor((canvas.height - rows * previewBlock) / 2);
+          const ox = ((canvas.width - cols * PREVIEW_BLOCK) / 2) | 0;
+          const oy = ((canvas.height - rows * PREVIEW_BLOCK) / 2) | 0;
 
           for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
               if (shape[r][c] !== 0) {
-                const color = COLORS[shape[r][c]];
-                context.fillStyle = color;
-                context.fillRect(
-                  ox + c * previewBlock,
-                  oy + r * previewBlock,
-                  previewBlock,
-                  previewBlock,
-                );
-                context.strokeStyle = "rgba(0,0,0,0.4)";
-                context.lineWidth = 1;
-                context.strokeRect(
-                  ox + c * previewBlock + 0.5,
-                  oy + r * previewBlock + 0.5,
-                  previewBlock - 1,
-                  previewBlock - 1,
-                );
-                context.fillStyle = "rgba(255,255,255,0.15)";
-                context.fillRect(
-                  ox + c * previewBlock,
-                  oy + r * previewBlock,
-                  previewBlock,
-                  2,
-                );
-                context.fillRect(
-                  ox + c * previewBlock,
-                  oy + r * previewBlock,
-                  2,
-                  previewBlock,
+                context.drawImage(
+                  previewSprites[shape[r][c]],
+                  ox + c * PREVIEW_BLOCK,
+                  oy + r * PREVIEW_BLOCK,
                 );
               }
             }
@@ -1180,7 +1184,23 @@
             return;
           }
 
-          if (paused || animatingLines) return;
+          if (paused) {
+            if (e.code === "ArrowUp") {
+              e.preventDefault();
+              pauseMenuIdx = (pauseMenuIdx - 1 + pauseMenuBtns.length) % pauseMenuBtns.length;
+              highlightPauseBtn();
+            } else if (e.code === "ArrowDown") {
+              e.preventDefault();
+              pauseMenuIdx = (pauseMenuIdx + 1) % pauseMenuBtns.length;
+              highlightPauseBtn();
+            } else if (e.code === "Enter") {
+              e.preventDefault();
+              pauseMenuBtns[pauseMenuIdx].click();
+            }
+            return;
+          }
+
+          if (animatingLines) return;
 
           switch (e.code) {
             case "ArrowLeft":
@@ -1233,9 +1253,23 @@
           }
         });
 
+        const pauseMenuBtns = [
+          document.getElementById("btn-resume"),
+          document.getElementById("btn-restart"),
+          document.getElementById("btn-quit"),
+        ];
+        let pauseMenuIdx = 0;
+
+        function highlightPauseBtn() {
+          for (let i = 0; i < pauseMenuBtns.length; i++)
+            pauseMenuBtns[i].classList.toggle("selected", i === pauseMenuIdx);
+        }
+
         function togglePause() {
           paused = !paused;
           if (paused) {
+            pauseMenuIdx = 0;
+            highlightPauseBtn();
             pauseOverlay.classList.remove("hidden");
           } else {
             pauseOverlay.classList.add("hidden");
@@ -1258,8 +1292,7 @@
           pauseOverlay.classList.add("hidden");
           gameoverOverlay.classList.add("hidden");
           startOverlay.classList.remove("hidden");
-          ctx.fillStyle = "#111122";
-          ctx.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
+          ctx.drawImage(bgCanvas, 0, 0);
           drawPreview(nctx, nextCanvas, null);
           drawPreview(hctx, holdCanvas, null);
           scoreEl.textContent = "0";
@@ -1317,10 +1350,7 @@
           // Gravity catch-up: move multiple rows if needed for consistent drop speed
           while (dropTimer >= dropInterval && !onGround) {
             dropTimer -= dropInterval;
-
-            // Recompute onGround since state changes as we move
-            const shape2 = getShape(currentType, currentRotation);
-            onGround = collides(shape2, currentX, currentY + 1);
+            onGround = collides(shape, currentX, currentY + 1);
             if (onGround) break;
 
             if (moveDown()) {
@@ -1369,8 +1399,7 @@
         }
 
         // Initial draw
-        ctx.fillStyle = "#111122";
-        ctx.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
+        ctx.drawImage(bgCanvas, 0, 0);
         drawPreview(nctx, nextCanvas, null);
         drawPreview(hctx, holdCanvas, null);
       })();
