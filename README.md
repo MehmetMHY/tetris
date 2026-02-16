@@ -4,7 +4,7 @@
 
 <h1 align="center">Tetris</h1>
 
-*A simple modern Tetris clone built with plain HTML Canvas CSS and JavaScript with no frameworks no build steps no external dependencies*
+_A simple modern Tetris clone built with plain HTML Canvas CSS and JavaScript with no frameworks no build steps no external dependencies_
 
 ## About
 
@@ -29,7 +29,7 @@ I built it primarily using:
 - Line clear flash animation
 - Background music with mute and unmute toggle and mute state persisted
 
-## How to run
+## How To Run
 
 Python is required for the lightweight web server that hosts the game
 
@@ -43,12 +43,15 @@ The script starts a local Python HTTP server and opens the game in your browser
 
 You can also open `index.html` directly in a browser although some browsers may restrict audio autoplay or local file APIs
 
-## Implementation notes
+## Implementation Notes
 
 - Rendering uses pre rendered block sprites on offscreen canvases for better performance
 - There is a pre rendered grid background that is blitted each frame
 - Rotation uses Super Rotation System style wall kicks
 - There is a simple level based timing system for gravity and lock delay
 - High scores and mute state are stored with `localStorage`
+- The music is from [this](https://www.youtube.com/watch?v=NmCCQxVBfyM) YouTube video
 
-Feel free to fork tweak the tuning or use this as a reference for your own Tetris experiments
+## License
+
+Feel free to fork tweak the tuning or use this as a reference for your own Tetris experiments. Licensed under the [MIT License](./LICENSE).
