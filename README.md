@@ -45,6 +45,7 @@ You can also open `index.html` directly in a browser although some browsers may 
 
 ## Implementation Notes
 
+- This game/app was optimized for a Desktop experience not mobile
 - Rendering uses pre rendered block sprites on offscreen canvases for better performance
 - There is a pre rendered grid background that is blitted each frame
 - Rotation uses Super Rotation System style wall kicks
