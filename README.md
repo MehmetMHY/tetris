@@ -1,20 +1,14 @@
 <p align="center">
-  <img src="./logo.png" width="150">
+  <img src="./logo.png" width="175">
 </p>
 
 <h1 align="center">Tetris</h1>
 
-_A simple modern Tetris clone built with plain HTML Canvas CSS and JavaScript with no frameworks no build steps no external dependencies_
+_A lightweight Tetris clone built with vanilla HTML, Canvas, CSS, and JavaScript (no dependencies)_
 
 ## About
 
-This was a fun weekend project that I enjoy playing and it was very much
-<a href="https://en.wikipedia.org/wiki/Vibe_coding">vibe coded</a>  
-I built it primarily using:
-
-- <a href="https://code.claude.com/docs/en/overview">Anthropic's Claude Code CLI</a>
-- <a href="https://github.com/google-gemini/gemini-cli">Google's Gemini CLI</a>
-- <a href="https://github.com/MehmetMHY/ch">Cha CLI</a>
+[Tetris](https://en.wikipedia.org/wiki/Tetris) is a legendary game and one that I enjoy very much. I really love the game and enjoy playing it, it's a great stress reliever, so for a fun weekend project I decided to build the game, as a browser game/app designed for Desktop, using the principles of [vibe coding](https://en.wikipedia.org/wiki/Vibe_coding).
 
 ## Features
 
@@ -29,19 +23,22 @@ I built it primarily using:
 - Line clear flash animation
 - Background music with mute and unmute toggle and mute state persisted
 
-## How To Run
-
-Python is required for the lightweight web server that hosts the game
+## How To Run Locally
 
 From the project directory run
 
 ```bash
+# NOTE: python is used to run lightweight web server for the site
 bash run.sh
 ```
 
-The script starts a local Python HTTP server and opens the game in your browser
+The script starts a local Python HTTP server and opens the game in your browser. You can also open `index.html` directly in a browser although some browsers may restrict audio autoplay or local file APIs
 
-You can also open `index.html` directly in a browser although some browsers may restrict audio autoplay or local file APIs
+## Tools Used
+
+- [Claude Code CLI](https://code.claude.com/docs/en/overview)
+- [Gemini CLI](https://github.com/google-gemini/gemini-cli)
+- [Cha CLI](https://github.com/MehmetMHY/ch)
 
 ## Implementation Notes
 
