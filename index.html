@@ -23,6 +23,10 @@
         overflow: hidden;
       }
 
+      * {
+        font-family: inherit;
+      }
+
       .game-container {
         display: flex;
         gap: 24px;
@@ -198,8 +202,14 @@
         outline: none;
       }
 
-      .mute-btn {
-        width: 100%;
+      .button-group {
+        display: flex;
+        gap: 8px;
+      }
+
+      .mute-btn,
+      .settings-btn {
+        flex: 1;
         background: #2a2a4e;
         color: #fff;
         border: 2px solid #555;
@@ -214,7 +224,9 @@
       }
 
       .mute-btn:hover,
-      .mute-btn:focus {
+      .mute-btn:focus,
+      .settings-btn:hover,
+      .settings-btn:focus {
         background: #3a3a6e;
         outline: none;
       }
@@ -275,7 +287,10 @@
           <kbd>M</kbd> Mute/Unmute<br />
           <kbd>Esc</kbd> / <kbd>P</kbd> Pause
         </div>
-        <button class="mute-btn" id="mute-btn">🔊 Unmute</button>
+        <div class="button-group">
+          <button class="mute-btn" id="mute-btn">Mute</button>
+          <button class="settings-btn" id="pause-btn">Pause</button>
+        </div>
       </div>
     </div>
 
@@ -335,7 +350,7 @@
         function applyMute() {
           audioEl.muted = muted;
           audioEl.volume = muted ? 0 : 1;
-          muteBtn.textContent = muted ? "🔇 Muted" : "🔊 Unmute";
+          muteBtn.textContent = muted ? "Muted" : "Mute";
           if (muted) {
             muteBtn.classList.add("muted");
           } else {
@@ -367,6 +382,13 @@
           muteBtn.blur();
           toggleMute();
         });
+
+        const pauseBtn = document.getElementById("pause-btn");
+        pauseBtn.addEventListener("click", () => {
+          pauseBtn.blur();
+          if (started && !gameOver) togglePause();
+        });
+
         applyMute();
 
         // ─── Constants ───
