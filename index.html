@@ -278,10 +278,10 @@
         </div>
         <div class="panel-box controls-info">
           <h3>Controls</h3>
-          <kbd>&larr;</kbd> <kbd>&rarr;</kbd> Move<br />
-          <kbd>&darr;</kbd> Soft drop<br />
+          <kbd>&larr;</kbd><kbd>A</kbd> <kbd>&rarr;</kbd><kbd>D</kbd> Move<br />
+          <kbd>&darr;</kbd><kbd>S</kbd> Soft drop<br />
           <kbd>Space</kbd> Hard drop<br />
-          <kbd>&uarr;</kbd> / <kbd>X</kbd> Rotate CW<br />
+          <kbd>&uarr;</kbd><kbd>W</kbd> / <kbd>X</kbd> Rotate CW<br />
           <kbd>Z</kbd> Rotate CCW<br />
           <kbd>C</kbd> Hold<br />
           <kbd>M</kbd> Mute/Unmute<br />
@@ -1207,13 +1207,13 @@
           }
 
           if (paused) {
-            if (e.code === "ArrowUp") {
+            if (e.code === "ArrowUp" || e.code === "KeyW") {
               e.preventDefault();
               pauseMenuIdx =
                 (pauseMenuIdx - 1 + pauseMenuBtns.length) %
                 pauseMenuBtns.length;
               highlightPauseBtn();
-            } else if (e.code === "ArrowDown") {
+            } else if (e.code === "ArrowDown" || e.code === "KeyS") {
               e.preventDefault();
               pauseMenuIdx = (pauseMenuIdx + 1) % pauseMenuBtns.length;
               highlightPauseBtn();
@@ -1228,20 +1228,24 @@
 
           switch (e.code) {
             case "ArrowLeft":
+            case "KeyA":
               e.preventDefault();
               startDAS("left", moveLeft);
               break;
             case "ArrowRight":
+            case "KeyD":
               e.preventDefault();
               startDAS("right", moveRight);
               break;
             case "ArrowDown":
+            case "KeyS":
               e.preventDefault();
               if (!keys["down"]) {
                 keys["down"] = true;
               }
               break;
             case "ArrowUp":
+            case "KeyW":
             case "KeyX":
               e.preventDefault();
               rotate(1);
@@ -1266,12 +1270,15 @@
         document.addEventListener("keyup", (e) => {
           switch (e.code) {
             case "ArrowLeft":
+            case "KeyA":
               stopDAS("left");
               break;
             case "ArrowRight":
+            case "KeyD":
               stopDAS("right");
               break;
             case "ArrowDown":
+            case "KeyS":
               keys["down"] = false;
               break;
           }
