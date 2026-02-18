@@ -490,6 +490,30 @@
           }
         })();
 
+        // ─── Board cache (locked pieces drawn once, blitted each frame) ───
+        const boardCacheCanvas = document.createElement("canvas");
+        boardCacheCanvas.width = COLS * BLOCK;
+        boardCacheCanvas.height = ROWS * BLOCK;
+        const boardCacheCtx = boardCacheCanvas.getContext("2d");
+        boardCacheCtx.imageSmoothingEnabled = false;
+        let boardDirty = true;
+
+        function rebuildBoardCache() {
+          boardCacheCtx.drawImage(bgCanvas, 0, 0);
+          for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+              if (board[r][c] !== EMPTY) {
+                boardCacheCtx.drawImage(
+                  blockSprites[board[r][c]],
+                  (c * BLOCK) | 0,
+                  (r * BLOCK) | 0,
+                );
+              }
+            }
+          }
+          boardDirty = false;
+        }
+
         // Tetromino shapes (each rotation state)
         const SHAPES = {
           I: [
@@ -895,6 +919,7 @@
               }
             }
           }
+          boardDirty = true;
           clearLines();
         }
 
@@ -909,7 +934,7 @@
             return;
           }
 
-          animatingLines = full;
+          animatingLines = new Set(full);
 
           // Flash then remove, spawn AFTER clearing is done
           setTimeout(() => {
@@ -922,6 +947,7 @@
             for (let i = 0; i < full.length; i++) {
               board.unshift(new Array(COLS).fill(EMPTY));
             }
+            boardDirty = true;
 
             const count = full.length;
             lines += count;
@@ -1085,19 +1111,15 @@
         }
 
         function drawBoard() {
-          ctx.drawImage(bgCanvas, 0, 0);
+          // Locked pieces (cached – only rebuilt when board changes)
+          if (boardDirty) rebuildBoardCache();
+          ctx.drawImage(boardCacheCanvas, 0, 0);
 
-          // Locked pieces
-          for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-              if (board[r][c] !== EMPTY) {
-                if (animatingLines && animatingLines.includes(r)) {
-                  ctx.fillStyle = "#fff";
-                  ctx.fillRect(c * BLOCK, r * BLOCK, BLOCK, BLOCK);
-                } else {
-                  drawBlock(ctx, c, r, board[r][c]);
-                }
-              }
+          // Line clear flash overlay
+          if (animatingLines) {
+            ctx.fillStyle = "#fff";
+            for (const r of animatingLines) {
+              ctx.fillRect(0, r * BLOCK, COLS * BLOCK, BLOCK);
             }
           }
 
@@ -1358,7 +1380,12 @@
         function gameLoop(time) {
           rafId = requestAnimationFrame(gameLoop);
 
-          if (paused || gameOver || animatingLines) {
+          if (paused || gameOver) {
+            lastTime = time;
+            return;
+          }
+
+          if (animatingLines) {
             lastTime = time;
             drawBoard();
             return;
@@ -1401,19 +1428,20 @@
             if (moveDown()) {
               if (keys["down"]) {
                 score += SOFT_DROP_SCORE;
-                updateUI();
               }
             } else {
               break;
             }
           }
 
+          updateUI();
           drawBoard();
         }
 
         // ─── Init ───
         function startGame() {
           board = createBoard();
+          boardDirty = true;
           score = 0;
           lines = 0;
           level = 1;
