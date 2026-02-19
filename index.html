@@ -1248,7 +1248,7 @@
               e.preventDefault();
               pauseMenuIdx = (pauseMenuIdx + 1) % pauseMenuBtns.length;
               highlightPauseBtn();
-            } else if (e.code === "Enter") {
+            } else if (e.code === "Enter" || e.code === "Space") {
               e.preventDefault();
               pauseMenuBtns[pauseMenuIdx].click();
             }
