@@ -123,14 +123,14 @@
 
       .overlay-content h2 {
         font-size: 32px;
-        margin-bottom: 12px;
+        margin-bottom: 16px;
         color: #f44;
       }
 
       .overlay-content p {
         font-size: 18px;
         color: #aaa;
-        margin-bottom: 4px;
+        margin-bottom: 16px;
       }
 
       .overlay-content .final-score {
@@ -330,14 +330,9 @@
         <h2>GAME OVER</h2>
         <p class="final-score" id="final-score"></p>
         <p
-          class="final-score"
-          id="final-best"
-          style="color: #c9a15f; font-size: 18px"
-        ></p>
-        <p
           id="new-best"
           style="
-            color: #f0c000;
+            color: #c9a15f;
             font-size: 20px;
             font-weight: bold;
             display: none;
@@ -989,8 +984,7 @@
             highScoreEl.textContent = highScore;
           }
           localStorage.setItem("tetris-high-score", highScore);
-          finalScoreEl.textContent = `Score: ${score}`;
-          finalBestEl.textContent = `Best: ${highScore}`;
+          finalScoreEl.textContent = `${score}`;
           newBestEl.style.display = isNewBest ? "block" : "none";
           gameoverOverlay.classList.remove("hidden");
           applyMute();
