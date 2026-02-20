@@ -137,6 +137,7 @@
         font-size: 24px;
         color: #fff;
         margin-bottom: 16px;
+        font-weight: bold;
       }
 
       .overlay-content .desktop-only {
@@ -256,6 +257,10 @@
           <div class="value" id="score">0</div>
         </div>
         <div class="panel-box">
+          <h3>Best</h3>
+          <div class="value" id="high-score" style="color: #c9a15f">0</div>
+        </div>
+        <div class="panel-box">
           <h3>Level</h3>
           <div class="value" id="level">1</div>
         </div>
@@ -279,10 +284,6 @@
         <div class="panel-box">
           <h3>Next</h3>
           <canvas id="next-canvas" width="112" height="60"></canvas>
-        </div>
-        <div class="panel-box">
-          <h3>Best</h3>
-          <div class="value" id="high-score">0</div>
         </div>
         <div class="panel-box controls-info">
           <h3>Controls</h3>
@@ -331,7 +332,7 @@
         <p
           class="final-score"
           id="final-best"
-          style="color: #aaa; font-size: 18px"
+          style="color: #c9a15f; font-size: 18px"
         ></p>
         <p
           id="new-best"
@@ -344,7 +345,7 @@
         >
           NEW HIGH SCORE!
         </p>
-        <p class="prompt">Press any key to restart &middot; Esc to quit</p>
+        <p class="prompt">Press any key to restart (Esc to quit)</p>
       </div>
     </div>
 
