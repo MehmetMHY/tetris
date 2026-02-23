@@ -4,7 +4,7 @@
 
 <h1 align="center">Tetris</h1>
 
-_A lightweight Tetris clone built with vanilla HTML, Canvas, CSS, and JavaScript (no dependencies)_
+<p align="center"><em>A lightweight Tetris clone</em></p>
 
 ## About
 
@@ -12,29 +12,29 @@ _A lightweight Tetris clone built with vanilla HTML, Canvas, CSS, and JavaScript
 
 ## Features
 
-- Classic 10 by 20 Tetris board with smooth controls
-- Standard seven bag piece randomizer
+- Classic 10x20 Tetris board with smooth keyboard controls
+- Standard seven-bag piece randomizer
 - Hold piece and next piece previews
-- Ghost piece projection
-- Level based speed curve and dynamic lock delay
-- Score lines level and best score tracking persisted in local storage
+- Ghost piece projection showing where pieces will land
+- Level-based speed curve with dynamic lock delay
+- Score, lines, level, and high score tracking persisted to local storage
 - Soft drop and hard drop scoring
-- Pause menu with resume restart and quit to title
+- Pause menu with resume, restart, and quit options
 - Line clear flash animation
-- Background music with mute and unmute toggle and mute state persisted
+- Background music with mute toggle (state persisted)
 
 ## How To Run Locally
 
 From the project directory run
 
 ```bash
-# NOTE: python is used to run lightweight web server for the site
+# NOTE: pythons used to run a lightweight web server
 bash run.sh
 ```
 
 The script starts a local Python HTTP server and opens the game in your browser. You can also open `index.html` directly in a browser although some browsers may restrict audio autoplay or local file APIs
 
-## Tools Used
+## Built With
 
 - [Claude Code CLI](https://code.claude.com/docs/en/overview)
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli)
@@ -42,13 +42,12 @@ The script starts a local Python HTTP server and opens the game in your browser.
 
 ## Implementation Notes
 
-- This game/app was optimized for a Desktop experience not mobile
-- Rendering uses pre rendered block sprites on offscreen canvases for better performance
-- There is a pre rendered grid background that is blitted each frame
-- Rotation uses Super Rotation System style wall kicks
-- There is a simple level based timing system for gravity and lock delay
-- High scores and mute state are stored with `localStorage`
-- The music is from [this](https://www.youtube.com/watch?v=NmCCQxVBfyM) YouTube video
+- Optimized for desktop experience (not mobile)
+- Pre-rendered block sprites and grid background for performance
+- Uses Super Rotation System (SRS) style wall kicks for piece rotation
+- Level-based timing system for gravity speed and lock delay
+- High scores and mute state persisted with `localStorage`
+- Background music source: [NmCCQxVBfyM](https://www.youtube.com/watch?v=NmCCQxVBfyM)
 
 ## License
 
