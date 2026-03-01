@@ -4,8 +4,10 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+      content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Tetris</title>
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png" />
@@ -68,7 +70,11 @@
           grid-template-columns: 1fr 1fr 2fr 1.2fr; /* 4 columns: Next, Hold, Score, Buttons */
           grid-template-rows: auto 1fr;
           gap: 4px;
-          padding: max(6px, env(safe-area-inset-top)) calc(6px + env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) calc(6px + env(safe-area-inset-left));
+          padding: 6px;
+          padding-top: max(6px, env(safe-area-inset-top, 0px), var(--ios-top-inset, 0px));
+          padding-bottom: max(6px, env(safe-area-inset-bottom, 0px), var(--ios-bottom-inset, 0px));
+          padding-left: calc(6px + env(safe-area-inset-left, 0px));
+          padding-right: calc(6px + env(safe-area-inset-right, 0px));
           height: 100dvh;
           width: 100vw;
           box-sizing: border-box;
@@ -178,7 +184,8 @@
         }
 
         .mute-btn,
-        .settings-btn {
+        .settings-btn,
+        .hold-btn {
           flex: 1;
           font-size: 10px;
           padding: 0;
@@ -194,13 +201,18 @@
           min-height: 0;
         }
 
-        .box-buttons button:first-child {
+        .box-buttons button {
           border-bottom: 1px solid #333;
+        }
+
+        .box-buttons button:last-child {
+          border-bottom: none;
         }
 
         /* Interactive states for mobile buttons */
         .mute-btn:active,
-        .settings-btn:active {
+        .settings-btn:active,
+        .hold-btn:active {
           background: #3a3a6e;
         }
 
@@ -280,7 +292,7 @@
         justify-content: center;
         align-items: center;
         z-index: 10;
-        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        padding: max(env(safe-area-inset-top, 0px), var(--ios-top-inset, 0px)) env(safe-area-inset-right, 0px) max(env(safe-area-inset-bottom, 0px), var(--ios-bottom-inset, 0px)) env(safe-area-inset-left, 0px);
       }
 
       .overlay.hidden {
@@ -405,6 +417,10 @@
       .button-group {
         display: flex;
         gap: 8px;
+      }
+
+      .hold-btn {
+        display: none;
       }
 
       .mute-btn,
@@ -541,6 +557,7 @@
         <div class="button-group box-buttons">
           <button class="settings-btn" id="pause-btn">Pause</button>
           <button class="mute-btn" id="mute-btn">Mute</button>
+          <button class="hold-btn" id="hold-btn">Hold</button>
         </div>
       </div>
     </div>
@@ -613,6 +630,39 @@
     </div>
 
     <script>
+      // ─── iOS Safe Area + Zoom Fix ───
+      (() => {
+        // Prevent double-tap zoom on iOS Safari
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+          const now = Date.now();
+          if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+          }
+          lastTouchEnd = now;
+        }, { passive: false });
+
+        // Detect iOS and apply Dynamic Island / notch padding if safe-area is 0
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isIOS) {
+          // Check if env(safe-area-inset-top) resolves to 0
+          const test = document.createElement('div');
+          test.style.paddingTop = 'env(safe-area-inset-top, 0px)';
+          document.body.appendChild(test);
+          const inset = parseInt(getComputedStyle(test).paddingTop) || 0;
+          document.body.removeChild(test);
+          if (inset === 0) {
+            // Screen height > 800 likely has notch/island
+            if (window.screen.height >= 812) {
+              document.documentElement.style.setProperty('--ios-top-inset', '50px');
+              document.documentElement.style.setProperty('--ios-bottom-inset', '34px');
+            }
+          }
+        }
+      })();
+    </script>
+    <script>
       (() => {
         // ─── Audio Setup ───
         const audioEl = document.getElementById("background-audio");
@@ -660,6 +710,12 @@
         pauseBtn.addEventListener("click", () => {
           pauseBtn.blur();
           if (started && !gameOver) togglePause();
+        });
+
+        const holdBtn = document.getElementById("hold-btn");
+        holdBtn.addEventListener("click", () => {
+          holdBtn.blur();
+          if (started && !gameOver && !paused) holdPiece();
         });
 
         applyMute();
@@ -1649,22 +1705,25 @@
         });
 
         // ─── Touch Controls ───
-        // Compute drag threshold from the rendered cell size on screen
+        // Match official play.tetris.com mobile controls:
+        //   Swipe left/right = move
+        //   Swipe down       = soft drop
+        //   Swipe up (flick) = hard drop
+        //   Tap              = rotate CW
+
         function getCellPx() {
           const rect = boardCanvas.getBoundingClientRect();
           return rect.width / COLS;
         }
 
-        let touchId = null; // track single finger
-        let touchstartX = 0;
-        let touchstartY = 0;
-        let lastTouchX = 0;
-        let lastTouchY = 0;
-        let touchstartTime = 0;
-        let touchCellsMovedX = 0; // how many cells moved this gesture
-        let touchCellsMovedY = 0;
-        let touchGesture = "none"; // "none" | "horizontal" | "vertical"
-        let softDropActive = false;
+        let touchId = null;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let lastDragX = 0;
+        let lastDragY = 0;
+        let touchStartTime = 0;
+        let hasMoved = false;     // any significant movement occurred
+        let isSoftDropping = false;
 
         function isUIElement(e) {
           return (
@@ -1678,19 +1737,17 @@
           "touchstart",
           (e) => {
             if (isUIElement(e) || !started || paused || gameOver) return;
-            if (touchId !== null) return; // already tracking a finger
+            if (touchId !== null) return;
 
             const t = e.changedTouches[0];
             touchId = t.identifier;
-            touchstartX = t.screenX;
-            touchstartY = t.screenY;
-            lastTouchX = t.screenX;
-            lastTouchY = t.screenY;
-            touchstartTime = Date.now();
-            touchCellsMovedX = 0;
-            touchCellsMovedY = 0;
-            touchGesture = "none";
-            softDropActive = false;
+            touchStartX = t.screenX;
+            touchStartY = t.screenY;
+            lastDragX = t.screenX;
+            lastDragY = t.screenY;
+            touchStartTime = Date.now();
+            hasMoved = false;
+            isSoftDropping = false;
           },
           { passive: false },
         );
@@ -1701,7 +1758,6 @@
             if (isUIElement(e) || !started || paused || gameOver) return;
             e.preventDefault();
 
-            // Find our tracked finger
             let t = null;
             for (let i = 0; i < e.changedTouches.length; i++) {
               if (e.changedTouches[i].identifier === touchId) {
@@ -1714,56 +1770,40 @@
             const touchX = t.screenX;
             const touchY = t.screenY;
             const cellPx = getCellPx();
-            // Use ~60% of cell width as drag threshold for snappy feel
-            const threshold = cellPx * 0.6;
+            const hThreshold = cellPx * 0.5;
 
-            const diffX = touchX - lastTouchX;
-            const diffY = touchY - lastTouchY;
-
-            // Lock gesture direction after first significant movement
-            if (touchGesture === "none") {
-              if (Math.abs(touchX - touchstartX) > threshold) {
-                touchGesture = "horizontal";
-              } else if (touchY - touchstartY > threshold) {
-                touchGesture = "vertical";
+            // ── Horizontal: cell-snapped drag (always allowed) ──
+            while (touchX - lastDragX >= hThreshold) {
+              if (moveRight()) {
+                lastDragX += hThreshold;
+                hasMoved = true;
+              } else {
+                lastDragX = touchX;
+                break;
+              }
+            }
+            while (lastDragX - touchX >= hThreshold) {
+              if (moveLeft()) {
+                lastDragX -= hThreshold;
+                hasMoved = true;
+              } else {
+                lastDragX = touchX;
+                break;
               }
             }
 
-            // Horizontal: cell-snapped drag
-            if (touchGesture !== "vertical") {
-              while (touchX - lastTouchX > threshold) {
-                if (moveRight()) {
-                  lastTouchX += threshold;
-                  touchCellsMovedX++;
-                } else {
-                  lastTouchX = touchX;
-                  break;
-                }
-              }
-              while (lastTouchX - touchX > threshold) {
-                if (moveLeft()) {
-                  lastTouchX -= threshold;
-                  touchCellsMovedX++;
-                } else {
-                  lastTouchX = touchX;
-                  break;
-                }
-              }
-            }
-
-            // Vertical: soft drop when dragging down
-            const totalDiffY = touchY - touchstartY;
-            if (totalDiffY > threshold * 1.5) {
-              if (!softDropActive) {
-                softDropActive = true;
+            // ── Vertical: soft drop while finger drags down ──
+            const downDist = touchY - touchStartY;
+            if (downDist > cellPx) {
+              if (!isSoftDropping) {
+                isSoftDropping = true;
                 keys["down"] = true;
               }
-              touchCellsMovedY++;
-            } else {
-              if (softDropActive) {
-                softDropActive = false;
-                keys["down"] = false;
-              }
+              hasMoved = true;
+            } else if (isSoftDropping && downDist < cellPx * 0.5) {
+              // Dragged back up — cancel soft drop
+              isSoftDropping = false;
+              keys["down"] = false;
             }
           },
           { passive: false },
@@ -1772,7 +1812,6 @@
         document.addEventListener(
           "touchend",
           (e) => {
-            // Find our tracked finger
             let t = null;
             for (let i = 0; i < e.changedTouches.length; i++) {
               if (e.changedTouches[i].identifier === touchId) {
@@ -1783,47 +1822,34 @@
             if (!t) return;
             touchId = null;
 
+            // Always stop soft drop on release
             keys["down"] = false;
-            softDropActive = false;
+            isSoftDropping = false;
 
             if (isUIElement(e) || !started || paused || gameOver) return;
 
-            const touchX = t.screenX;
-            const touchY = t.screenY;
-            const diffX = touchX - touchstartX;
-            const diffY = touchY - touchstartY;
-            const duration = Date.now() - touchstartTime;
-            const totalMoved = touchCellsMovedX + touchCellsMovedY;
+            const diffX = t.screenX - touchStartX;
+            const diffY = t.screenY - touchStartY;
+            const duration = Date.now() - touchStartTime;
 
-            // Tap -> Rotate (left half = CCW, right half = CW)
+            // ── Tap = Rotate CW ──
             if (
-              totalMoved === 0 &&
+              !hasMoved &&
               duration < 250 &&
-              Math.abs(diffX) < 15 &&
-              Math.abs(diffY) < 15
+              Math.abs(diffX) < 12 &&
+              Math.abs(diffY) < 12
             ) {
-              const boardRect = boardCanvas.getBoundingClientRect();
-              const tapX = t.clientX;
-              const boardCenter = boardRect.left + boardRect.width / 2;
-              if (tapX < boardCenter) {
-                rotate(-1); // CCW
-              } else {
-                rotate(1); // CW
-              }
+              rotate(1);
               return;
             }
 
-            // Quick flick detection
+            // ── Quick flick UP = Hard Drop ──
             if (
               duration < 300 &&
-              Math.abs(diffY) > Math.abs(diffX) &&
-              Math.abs(diffY) > 40
+              diffY < -30 &&
+              Math.abs(diffY) > Math.abs(diffX)
             ) {
-              if (diffY > 0) {
-                hardDrop(); // Flick down -> hard drop
-              } else {
-                holdPiece(); // Flick up -> hold
-              }
+              hardDrop();
             }
           },
           { passive: false },
