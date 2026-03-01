@@ -304,7 +304,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 20px;
+        gap: 16px;
       }
 
       .overlay-content h1 {
@@ -452,7 +452,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 8px;
+        gap: 4px;
       }
 
       .level-label {
@@ -469,9 +469,9 @@
       }
 
       .level-value {
-        font-size: 36px;
+        font-size: 28px;
         font-weight: bold;
-        min-width: 50px;
+        min-width: 40px;
         text-align: center;
       }
 
@@ -582,7 +582,7 @@
           >
           <div
             id="menu-high-score"
-            style="font-size: 24px; font-weight: bold; color: #fff"
+            style="font-size: 28px; font-weight: bold; color: #fff"
           >
             0
           </div>
@@ -1843,10 +1843,10 @@
               return;
             }
 
-            // ── Quick flick UP = Hard Drop ──
+            // ── Quick flick = Hard Drop (up or down) ──
             if (
               duration < 300 &&
-              diffY < -30 &&
+              Math.abs(diffY) > 30 &&
               Math.abs(diffY) > Math.abs(diffX)
             ) {
               hardDrop();
