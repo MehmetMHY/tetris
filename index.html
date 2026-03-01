@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>Tetris</title>
     <link rel="icon" href="logo.png" type="image/png" />
     <style>
@@ -31,6 +34,7 @@
         display: flex;
         gap: 24px;
         align-items: flex-start;
+        justify-content: center;
       }
 
       .side-panel {
@@ -38,6 +42,166 @@
         flex-direction: column;
         gap: 16px;
         min-width: 175px;
+      }
+
+      /* Mobile Layout */
+      @media (max-width: 768px) {
+        body {
+          display: block;
+          padding: 0;
+          overflow: hidden; /* Prevent scrolling */
+          background: #000;
+        }
+
+        .game-container {
+          display: grid;
+          grid-template-columns: 1fr 1fr 2fr 1.2fr; /* 4 columns: Next, Hold, Score, Buttons */
+          grid-template-rows: auto 1fr;
+          gap: 4px;
+          padding: 6px 6px 0 6px; /* Added 6px side buffer for top row */
+          height: 100vh;
+          width: 100vw;
+          box-sizing: border-box;
+          justify-content: stretch;
+          align-items: stretch;
+        }
+
+        /* Flatten panels for grid */
+        .side-panel {
+          display: contents;
+        }
+
+        /* Top Row Grid Placement */
+        .box-next {
+          grid-column: 1;
+          grid-row: 1;
+        }
+        .box-hold {
+          grid-column: 2;
+          grid-row: 1;
+        }
+        .box-score {
+          grid-column: 3;
+          grid-row: 1;
+        }
+        .box-buttons {
+          grid-column: 4;
+          grid-row: 1;
+        }
+
+        .board-wrapper {
+          grid-column: 1 / -1;
+          grid-row: 2;
+          display: flex;
+          justify-content: center;
+          align-items: stretch; /* Stretch to fill */
+          padding: 0;
+          margin: 0 -6px; /* Negative margin to keep board edge-to-edge despite container padding */
+          border: none;
+          border-radius: 0; /* Square edges for edge-to-edge */
+          box-shadow: none;
+          background: transparent;
+          overflow: hidden;
+        }
+
+        #board {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          touch-action: none;
+        }
+
+        /* Hide desktop-only items and Level */
+        .box-best,
+        .box-speed,
+        .box-lines,
+        .box-controls,
+        .box-level {
+          display: none !important;
+        }
+
+        /* Adjust panels for slim top row */
+        .panel-box {
+          padding: 2px;
+          height: 60px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-width: 0;
+          border-radius: 4px; /* Slightly smaller radius for mobile */
+        }
+
+        .box-score {
+          align-items: flex-start;
+          padding-left: 8px;
+        }
+
+        .panel-box h3 {
+          font-size: 8px;
+          margin-bottom: 2px;
+        }
+
+        .panel-box .value {
+          font-size: 16px; /* Slightly larger for the stretched score */
+          word-break: break-all;
+        }
+
+        .panel-box canvas {
+          width: 100%;
+          height: auto;
+          max-height: 35px;
+          object-fit: contain;
+        }
+
+        /* Stacked Buttons - Split Card Look - Borderless */
+        .box-buttons {
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+          background: #1a1a2e;
+          border: none; /* Removed border as requested */
+          border-radius: 8px;
+          padding: 0;
+          height: 60px;
+          overflow: hidden;
+        }
+
+        .mute-btn,
+        .settings-btn {
+          flex: 1;
+          font-size: 10px;
+          padding: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0;
+          width: 100%;
+          border: none;
+          border-radius: 0;
+          background: transparent;
+          line-height: 1;
+          min-height: 0;
+        }
+
+        .box-buttons button:first-child {
+          border-bottom: 1px solid #333;
+        }
+
+        /* Interactive states for mobile buttons */
+        .mute-btn:active,
+        .settings-btn:active {
+          background: #3a3a6e;
+        }
+
+        /* Hide desktop-only text in overlay */
+        .desktop-only {
+          display: none !important;
+        }
+
+        .mobile-only {
+          display: block !important;
+        }
       }
 
       .panel-box {
@@ -140,12 +304,26 @@
         font-weight: bold;
       }
 
-      .overlay-content .desktop-only {
+      .sub-text {
         font-size: 14px;
-        color: #fff;
         margin-bottom: 16px;
-        margin-top: -4px;
         font-style: italic;
+      }
+
+      .sub-text.desktop-only {
+        color: #fff;
+        margin-top: -4px;
+      }
+      .sub-text.mobile-only {
+        color: #aaa;
+      }
+
+      .desktop-only {
+        display: block;
+      }
+
+      .mobile-only {
+        display: none;
       }
 
       .overlay-content .prompt {
@@ -295,29 +473,29 @@
       <source src="NmCCQxVBfyM.mp3" type="audio/mpeg" />
     </audio>
     <div class="game-container">
-      <!-- Left panel -->
+      <!-- Left Panel -->
       <div class="side-panel">
-        <div class="panel-box">
+        <div class="panel-box box-hold">
           <h3>Hold</h3>
           <canvas id="hold-canvas" width="112" height="60"></canvas>
         </div>
-        <div class="panel-box">
+        <div class="panel-box box-score">
           <h3>Score</h3>
           <div class="value" id="score">0</div>
         </div>
-        <div class="panel-box">
+        <div class="panel-box box-best">
           <h3>Best</h3>
           <div class="value" id="high-score">0</div>
         </div>
-        <div class="panel-box">
+        <div class="panel-box box-level">
           <h3>Level</h3>
           <div class="value" id="level">1</div>
         </div>
-        <div class="panel-box">
+        <div class="panel-box box-speed">
           <h3>Speed</h3>
           <div class="value" id="speed-display">800</div>
         </div>
-        <div class="panel-box">
+        <div class="panel-box box-lines">
           <h3>Lines</h3>
           <div class="value" id="lines">0</div>
         </div>
@@ -328,13 +506,13 @@
         <canvas id="board" width="300" height="600"></canvas>
       </div>
 
-      <!-- Right panel -->
+      <!-- Right Panel -->
       <div class="side-panel">
-        <div class="panel-box">
+        <div class="panel-box box-next">
           <h3>Next</h3>
           <canvas id="next-canvas" width="112" height="60"></canvas>
         </div>
-        <div class="panel-box controls-info">
+        <div class="panel-box box-controls controls-info">
           <h3>Controls</h3>
           <kbd>&larr;</kbd><kbd>A</kbd> <kbd>&rarr;</kbd><kbd>D</kbd> Move<br />
           <kbd>&darr;</kbd><kbd>S</kbd> Soft drop<br />
@@ -345,9 +523,11 @@
           <kbd>M</kbd> Mute/Unmute<br />
           <kbd>Esc</kbd> / <kbd>P</kbd> Pause
         </div>
-        <div class="button-group">
-          <button class="mute-btn" id="mute-btn">Mute</button>
+
+        <!-- Buttons -->
+        <div class="button-group box-buttons">
           <button class="settings-btn" id="pause-btn">Pause</button>
+          <button class="mute-btn" id="mute-btn">Mute</button>
         </div>
       </div>
     </div>
@@ -356,7 +536,27 @@
     <div class="overlay" id="start-overlay">
       <div class="overlay-content">
         <h1>TETRIS</h1>
-        <p class="desktop-only">Desktop Only</p>
+        <div
+          class="mobile-only"
+          id="menu-high-score-container"
+          style="margin-bottom: 16px"
+        >
+          <span
+            style="
+              font-size: 14px;
+              text-transform: uppercase;
+              color: #888;
+              letter-spacing: 2px;
+            "
+            >Best</span
+          >
+          <div
+            id="menu-high-score"
+            style="font-size: 24px; font-weight: bold; color: #fff"
+          >
+            0
+          </div>
+        </div>
         <div class="level-picker">
           <span class="level-label">Level</span>
           <div class="level-selector">
@@ -365,7 +565,7 @@
             <button class="level-arrow" id="level-up">&rarr;</button>
           </div>
         </div>
-        <p class="prompt">Press Space or Enter to start</p>
+        <p class="prompt">Press Space, Enter, or Tap to start</p>
       </div>
     </div>
 
@@ -392,7 +592,10 @@
         >
           NEW HIGH SCORE!
         </p>
-        <p class="prompt">Press any key to restart (Esc to quit)</p>
+        <p class="prompt desktop-only">
+          Press any key to restart (Esc to quit)
+        </p>
+        <p class="prompt mobile-only">Tap to return to menu</p>
       </div>
     </div>
 
@@ -898,10 +1101,12 @@
         const finalBestEl = document.getElementById("final-best");
         const newBestEl = document.getElementById("new-best");
         const highScoreEl = document.getElementById("high-score");
+        const menuHighScoreEl = document.getElementById("menu-high-score");
 
         let highScore =
           parseInt(localStorage.getItem("tetris-high-score")) || 0;
         highScoreEl.textContent = highScore;
+        menuHighScoreEl.textContent = highScore;
 
         // ─── Level Picker ───
         const startLevelEl = document.getElementById("start-level");
@@ -1248,16 +1453,48 @@
           drawPreview(hctx, holdCanvas, holdType);
         }
 
+        let isShowingBest = false;
+        let scoreTimeout = null;
+
         function updateUI() {
-          scoreEl.textContent = score;
+          if (isShowingBest) {
+            scoreEl.textContent = highScore;
+          } else {
+            scoreEl.textContent = score;
+          }
           levelEl.textContent = level;
           speedEl.textContent = getSpeed(level);
           linesEl.textContent = lines;
           if (score > highScore) {
             highScore = score;
             highScoreEl.textContent = highScore;
+            menuHighScoreEl.textContent = highScore;
           }
         }
+
+        // Toggle Score/Best on click
+        const scoreBox = document.querySelector(".box-score");
+        const scoreTitle = scoreBox.querySelector("h3");
+
+        scoreBox.addEventListener("click", () => {
+          if (isShowingBest) {
+            // Revert immediately
+            isShowingBest = false;
+            scoreTitle.textContent = "Score";
+            clearTimeout(scoreTimeout);
+            updateUI();
+          } else {
+            // Show Best
+            isShowingBest = true;
+            scoreTitle.textContent = "Best";
+            updateUI();
+            scoreTimeout = setTimeout(() => {
+              isShowingBest = false;
+              scoreTitle.textContent = "Score";
+              updateUI();
+            }, 3000);
+          }
+        });
 
         // ─── DAS / Auto-repeat ───
         const DAS_DELAY = 170;
@@ -1398,6 +1635,137 @@
           }
         });
 
+        // ─── Touch Controls ───
+        let touchstartX = 0;
+        let touchstartY = 0;
+        let lastTouchX = 0;
+        let lastTouchY = 0;
+        let touchstartTime = 0;
+        let lastTapTime = 0;
+        let touchMoved = false;
+
+        document.addEventListener(
+          "touchstart",
+          (e) => {
+            // Ignore touches on UI elements
+            if (
+              e.target.closest("button") ||
+              e.target.closest(".panel-box") ||
+              e.target.closest(".box-buttons") ||
+              !started ||
+              paused ||
+              gameOver
+            )
+              return;
+
+            // Only handle touches if we are in the game area or overlay is gone
+            touchstartX = e.changedTouches[0].screenX;
+            touchstartY = e.changedTouches[0].screenY;
+            lastTouchX = touchstartX;
+            lastTouchY = touchstartY;
+            touchstartTime = Date.now();
+            touchMoved = false;
+          },
+          { passive: false },
+        );
+
+        document.addEventListener(
+          "touchmove",
+          (e) => {
+            if (
+              e.target.closest("button") ||
+              e.target.closest(".panel-box") ||
+              e.target.closest(".box-buttons") ||
+              !started ||
+              paused ||
+              gameOver
+            )
+              return;
+            e.preventDefault(); // Prevent scrolling
+
+            const touchX = e.changedTouches[0].screenX;
+            const touchY = e.changedTouches[0].screenY;
+
+            const diffX = touchX - lastTouchX;
+            const totalDiffX = touchX - touchstartX;
+            const totalDiffY = touchY - touchstartY;
+
+            // Horizontal Movement (1:1 Drag)
+            // Removed the totalDiffX > totalDiffY check to allow horizontal sliding
+            // even while dragging downwards (important for sliding at the bottom).
+            if (Math.abs(diffX) > 20) {
+              if (diffX > 0) {
+                if (moveRight()) {
+                  lastTouchX = touchX;
+                  touchMoved = true;
+                }
+              } else {
+                if (moveLeft()) {
+                  lastTouchX = touchX;
+                  touchMoved = true;
+                }
+              }
+            }
+
+            // Vertical Movement (Hold to Soft Drop)
+            if (totalDiffY > 40) {
+              keys["down"] = true;
+              touchMoved = true;
+            } else {
+              keys["down"] = false;
+            }
+          },
+          { passive: false },
+        );
+
+        document.addEventListener(
+          "touchend",
+          (e) => {
+            if (
+              e.target.closest("button") ||
+              e.target.closest(".panel-box") ||
+              e.target.closest(".box-buttons") ||
+              !started ||
+              paused ||
+              gameOver
+            )
+              return;
+
+            keys["down"] = false; // Stop soft drop on release
+
+            const touchX = e.changedTouches[0].screenX;
+            const touchY = e.changedTouches[0].screenY;
+            const diffX = touchX - touchstartX;
+            const diffY = touchY - touchstartY;
+            const duration = Date.now() - touchstartTime;
+
+            if (
+              !touchMoved &&
+              duration < 300 &&
+              Math.abs(diffX) < 10 &&
+              Math.abs(diffY) < 10
+            ) {
+              // Single Tap -> Rotate
+              rotate(1);
+            } else if (duration < 300) {
+              // Strict duration for Swipe vs Drag
+              // Swipe (Flick)
+              // If duration is short, we treat it as a Hard Drop (Flick)
+              // even if we processed some soft drops during the flick.
+              if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 40) {
+                if (diffY > 0) {
+                  // Swipe Down -> Hard Drop
+                  hardDrop();
+                } else {
+                  // Swipe Up -> Hold
+                  holdPiece();
+                }
+              }
+            }
+          },
+          { passive: false },
+        );
+
         const pauseMenuBtns = [
           document.getElementById("btn-resume"),
           document.getElementById("btn-restart"),
@@ -1444,6 +1812,7 @@
           levelEl.textContent = "1";
           speedEl.textContent = getSpeed(1);
           linesEl.textContent = "0";
+          menuHighScoreEl.textContent = highScore;
           applyMute();
         }
 
@@ -1554,6 +1923,19 @@
           cancelAnimationFrame(rafId);
           rafId = requestAnimationFrame(gameLoop);
         }
+
+        // ─── Touch Start/Restart ───
+        startOverlay.addEventListener("click", (e) => {
+          // Existing buttons have stopPropagation, but just in case
+          if (e.target.closest(".level-selector")) return;
+          if (!started) startGame();
+        });
+
+        gameoverOverlay.addEventListener("click", (e) => {
+          if (gameOver) {
+            quitToTitle();
+          }
+        });
 
         // Initial draw
         ctx.drawImage(bgCanvas, 0, 0);

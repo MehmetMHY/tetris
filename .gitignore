@@ -5,3 +5,4 @@ env/
 .claude/
 ch_*
 .tmp/
+tmp_*

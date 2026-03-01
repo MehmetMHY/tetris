@@ -14,6 +14,7 @@
 ## Features
 
 - Classic 10x20 Tetris board with smooth keyboard controls
+- Mobile support with responsive layout and touch controls
 - Standard seven-bag piece randomizer
 - Hold piece and next piece previews
 - Ghost piece projection showing where pieces will land
@@ -42,7 +43,7 @@ The script starts a local Python HTTP server and opens the game in your browser.
 
 ## Implementation Notes
 
-- Optimized for desktop experience (not mobile)
+- Responsive design optimized for both Desktop and Mobile
 - Pre-rendered block sprites and grid background for performance
 - Uses Super Rotation System (SRS) style wall kicks for piece rotation
 - Level-based timing system for gravity speed and lock delay
