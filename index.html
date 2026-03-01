@@ -1724,6 +1724,7 @@
         let touchStartTime = 0;
         let hasMoved = false;
         let isSoftDropping = false;
+        let pieceXAtTouchStart = 0; // piece column when touch began
         // Velocity tracking: store last few touch positions
         let touchHistory = []; // [{x, y, time}, ...]
         const SOFT_DROP_DELAY = 180; // ms before soft drop engages
@@ -1759,6 +1760,7 @@
             touchStartTime = Date.now();
             hasMoved = false;
             isSoftDropping = false;
+            pieceXAtTouchStart = currentX;
             touchHistory = [{ x: t.screenX, y: t.screenY, time: Date.now() }];
           },
           { passive: false },
@@ -1777,7 +1779,7 @@
             const touchX = t.screenX;
             const touchY = t.screenY;
             const cellPx = getCellPx();
-            const hThreshold = cellPx * 0.5;
+            const hThreshold = cellPx * 0.7;
             const elapsed = now - touchStartTime;
 
             // Track recent positions for velocity (keep last 100ms)
@@ -1871,6 +1873,11 @@
               Math.abs(diffY) > 25 &&
               Math.abs(diffY) > Math.abs(diffX) * 0.8
             ) {
+              // Undo any horizontal drift from the flick gesture
+              const shape = getShape(currentType, currentRotation);
+              if (!collides(shape, pieceXAtTouchStart, currentY)) {
+                currentX = pieceXAtTouchStart;
+              }
               hardDrop();
             }
           },
