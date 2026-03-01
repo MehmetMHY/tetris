@@ -7,7 +7,11 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>Tetris</title>
-    <link rel="icon" href="logo.png" type="image/png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+    <link rel="manifest" href="site.webmanifest" />
+    <link rel="shortcut icon" href="favicon.ico" />
     <style>
       * {
         margin: 0;
@@ -278,41 +282,44 @@
 
       .overlay-content {
         text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
       }
 
       .overlay-content h1 {
         font-size: 48px;
-        margin-bottom: 8px;
+        margin: 0;
       }
 
       .overlay-content h2 {
         font-size: 32px;
-        margin-bottom: 16px;
+        margin: 0;
         color: #f44;
       }
 
       .overlay-content p {
         font-size: 18px;
         color: #aaa;
-        margin-bottom: 16px;
+        margin: 0;
       }
 
       .overlay-content .final-score {
         font-size: 24px;
         color: #fff;
-        margin-bottom: 16px;
+        margin: 0;
         font-weight: bold;
       }
 
       .sub-text {
         font-size: 14px;
-        margin-bottom: 16px;
+        margin: 0;
         font-style: italic;
       }
 
       .sub-text.desktop-only {
         color: #fff;
-        margin-top: -4px;
       }
       .sub-text.mobile-only {
         color: #aaa;
@@ -362,7 +369,6 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
-        margin-top: 20px;
         align-items: center;
       }
 
@@ -419,7 +425,7 @@
       }
 
       .level-picker {
-        margin: 0 0 16px;
+        margin: 0;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -539,7 +545,7 @@
         <div
           class="mobile-only"
           id="menu-high-score-container"
-          style="margin-bottom: 16px"
+          style="text-align: center"
         >
           <span
             style="
