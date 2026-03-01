@@ -1705,11 +1705,12 @@
         });
 
         // ─── Touch Controls ───
-        // Match official play.tetris.com mobile controls:
-        //   Swipe left/right = move
-        //   Swipe down       = soft drop
-        //   Swipe up (flick) = hard drop
-        //   Tap              = rotate CW
+        // Official play.tetris.com style:
+        //   Swipe left/right  = move
+        //   Hold & drag down  = soft drop (delayed activation)
+        //   Quick flick down  = hard drop
+        //   Quick flick up    = hard drop
+        //   Tap               = rotate CW
 
         function getCellPx() {
           const rect = boardCanvas.getBoundingClientRect();
@@ -1720,10 +1721,12 @@
         let touchStartX = 0;
         let touchStartY = 0;
         let lastDragX = 0;
-        let lastDragY = 0;
         let touchStartTime = 0;
-        let hasMoved = false;     // any significant movement occurred
+        let hasMoved = false;
         let isSoftDropping = false;
+        // Velocity tracking: store last few touch positions
+        let touchHistory = []; // [{x, y, time}, ...]
+        const SOFT_DROP_DELAY = 180; // ms before soft drop engages
 
         function isUIElement(e) {
           return (
@@ -1731,6 +1734,15 @@
             e.target.closest(".panel-box") ||
             e.target.closest(".box-buttons")
           );
+        }
+
+        function getTrackedTouch(e) {
+          for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === touchId) {
+              return e.changedTouches[i];
+            }
+          }
+          return null;
         }
 
         document.addEventListener(
@@ -1744,10 +1756,10 @@
             touchStartX = t.screenX;
             touchStartY = t.screenY;
             lastDragX = t.screenX;
-            lastDragY = t.screenY;
             touchStartTime = Date.now();
             hasMoved = false;
             isSoftDropping = false;
+            touchHistory = [{ x: t.screenX, y: t.screenY, time: Date.now() }];
           },
           { passive: false },
         );
@@ -1758,21 +1770,23 @@
             if (isUIElement(e) || !started || paused || gameOver) return;
             e.preventDefault();
 
-            let t = null;
-            for (let i = 0; i < e.changedTouches.length; i++) {
-              if (e.changedTouches[i].identifier === touchId) {
-                t = e.changedTouches[i];
-                break;
-              }
-            }
+            const t = getTrackedTouch(e);
             if (!t) return;
 
+            const now = Date.now();
             const touchX = t.screenX;
             const touchY = t.screenY;
             const cellPx = getCellPx();
             const hThreshold = cellPx * 0.5;
+            const elapsed = now - touchStartTime;
 
-            // ── Horizontal: cell-snapped drag (always allowed) ──
+            // Track recent positions for velocity (keep last 100ms)
+            touchHistory.push({ x: touchX, y: touchY, time: now });
+            while (touchHistory.length > 1 && now - touchHistory[0].time > 100) {
+              touchHistory.shift();
+            }
+
+            // ── Horizontal: cell-snapped drag (always active) ──
             while (touchX - lastDragX >= hThreshold) {
               if (moveRight()) {
                 lastDragX += hThreshold;
@@ -1792,16 +1806,15 @@
               }
             }
 
-            // ── Vertical: soft drop while finger drags down ──
+            // ── Soft drop: only after holding down for SOFT_DROP_DELAY ──
             const downDist = touchY - touchStartY;
-            if (downDist > cellPx) {
+            if (downDist > cellPx && elapsed > SOFT_DROP_DELAY) {
               if (!isSoftDropping) {
                 isSoftDropping = true;
                 keys["down"] = true;
               }
               hasMoved = true;
-            } else if (isSoftDropping && downDist < cellPx * 0.5) {
-              // Dragged back up — cancel soft drop
+            } else if (isSoftDropping && downDist < cellPx * 0.3) {
               isSoftDropping = false;
               keys["down"] = false;
             }
@@ -1812,25 +1825,29 @@
         document.addEventListener(
           "touchend",
           (e) => {
-            let t = null;
-            for (let i = 0; i < e.changedTouches.length; i++) {
-              if (e.changedTouches[i].identifier === touchId) {
-                t = e.changedTouches[i];
-                break;
-              }
-            }
+            const t = getTrackedTouch(e);
             if (!t) return;
             touchId = null;
 
-            // Always stop soft drop on release
             keys["down"] = false;
             isSoftDropping = false;
 
             if (isUIElement(e) || !started || paused || gameOver) return;
 
+            const now = Date.now();
             const diffX = t.screenX - touchStartX;
             const diffY = t.screenY - touchStartY;
-            const duration = Date.now() - touchStartTime;
+            const duration = now - touchStartTime;
+
+            // Compute velocity from recent touch history
+            let velocityY = 0;
+            if (touchHistory.length >= 2) {
+              const oldest = touchHistory[0];
+              const dt = now - oldest.time;
+              if (dt > 0) {
+                velocityY = (t.screenY - oldest.y) / dt; // px/ms
+              }
+            }
 
             // ── Tap = Rotate CW ──
             if (
@@ -1843,11 +1860,13 @@
               return;
             }
 
-            // ── Quick flick = Hard Drop (up or down) ──
+            // ── Flick = Hard Drop ──
+            // Fast vertical velocity (either direction) = hard drop
+            const speed = Math.abs(velocityY); // px/ms
             if (
-              duration < 300 &&
-              Math.abs(diffY) > 30 &&
-              Math.abs(diffY) > Math.abs(diffX)
+              speed > 0.8 &&
+              Math.abs(diffY) > 25 &&
+              Math.abs(diffY) > Math.abs(diffX) * 0.8
             ) {
               hardDrop();
             }
