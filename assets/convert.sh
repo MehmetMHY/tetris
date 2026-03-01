@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # convert images with imagemagick
-# usage: bash tool.sh
+# usage: bash ./convert.sh
 
 # check if imagemagick is installed
 if ! command -v convert &>/dev/null; then

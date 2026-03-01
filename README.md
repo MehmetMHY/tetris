@@ -9,7 +9,7 @@
 
 ## About
 
-[Tetris](https://en.wikipedia.org/wiki/Tetris) is a legendary game and one that I enjoy very much. I really love the game and enjoy playing it, it's a great stress reliever, so for a fun weekend project I decided to build the game as a browser game/app designed for both Desktop and Mobile, using the principles of [vibe coding](https://en.wikipedia.org/wiki/Vibe_coding).
+[Tetris](https://en.wikipedia.org/wiki/Tetris) is a legendary game and one that I enjoy very much. I really love the game and enjoy playing it; it is a great stress reliever. For a fun weekend project, I decided to build the game as a browser game/app designed for both Desktop and Mobile, using the principles of [vibe coding](https://en.wikipedia.org/wiki/Vibe_coding). The overall feel of this version of Tetris was inspired by [Play Tetris](https://play.tetris.com/).
 
 ## Features
 
@@ -59,13 +59,14 @@ From the project directory run
 bash run.sh
 ```
 
-The script starts a local Python HTTP server and opens the game in your browser. You can also open `index.html` directly in a browser although some browsers may restrict audio autoplay or local file APIs
+The script starts a local Python HTTP server and opens the game in your browser. You can also open `index.html` directly in a browser, although some browsers may restrict audio autoplay or local file APIs.
 
 ## Built With
 
 - [Claude Code CLI](https://code.claude.com/docs/en/overview)
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli)
 - [Cha CLI](https://github.com/MehmetMHY/ch)
+- [xAI Grok Web App](https://grok.com/) _(generate logos/icons)_
 
 ## Implementation Notes
 
@@ -80,4 +81,4 @@ The script starts a local Python HTTP server and opens the game in your browser.
 
 ## License
 
-Feel free to fork tweak the tuning or use this as a reference for your own Tetris experiments. Licensed under the [MIT License](./LICENSE).
+Feel free to fork, tweak the tuning, or use this as a reference for your own Tetris experiments. Licensed under the [MIT License](./LICENSE).
