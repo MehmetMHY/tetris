@@ -1713,6 +1713,7 @@
         let hasMoved = false;
         let isSoftDropping = false;
         let pieceXAtTouchStart = 0; // piece column when touch began
+        let gestureDir = "none"; // "none" | "horizontal" | "vertical"
         // Velocity tracking: store last few touch positions
         let touchHistory = []; // [{x, y, time}, ...]
         const SOFT_DROP_DELAY = 180; // ms before soft drop engages
@@ -1749,6 +1750,7 @@
             hasMoved = false;
             isSoftDropping = false;
             pieceXAtTouchStart = currentX;
+            gestureDir = "none";
             touchHistory = [{ x: t.screenX, y: t.screenY, time: Date.now() }];
           },
           { passive: false },
@@ -1776,38 +1778,45 @@
               touchHistory.shift();
             }
 
-            // ── Horizontal: cell-snapped drag (always active) ──
-            while (touchX - lastDragX >= hThreshold) {
-              if (moveRight()) {
-                lastDragX += hThreshold;
-                hasMoved = true;
-              } else {
-                lastDragX = touchX;
-                break;
-              }
+            const totalDX = Math.abs(touchX - touchStartX);
+            const totalDY = Math.abs(touchY - touchStartY);
+
+            // Lock gesture direction on first significant movement
+            if (gestureDir === "none" && (totalDX > hThreshold || totalDY > hThreshold)) {
+              gestureDir = totalDY > totalDX ? "vertical" : "horizontal";
             }
-            while (lastDragX - touchX >= hThreshold) {
-              if (moveLeft()) {
-                lastDragX -= hThreshold;
-                hasMoved = true;
-              } else {
-                lastDragX = touchX;
-                break;
+
+            // ── Horizontal: only if gesture is horizontal ──
+            if (gestureDir !== "vertical") {
+              while (touchX - lastDragX >= hThreshold) {
+                if (moveRight()) {
+                  lastDragX += hThreshold;
+                  hasMoved = true;
+                } else {
+                  lastDragX = touchX;
+                  break;
+                }
+              }
+              while (lastDragX - touchX >= hThreshold) {
+                if (moveLeft()) {
+                  lastDragX -= hThreshold;
+                  hasMoved = true;
+                } else {
+                  lastDragX = touchX;
+                  break;
+                }
               }
             }
 
-            // ── Soft drop: only when dragging mostly downward ──
+            // ── Soft drop: only when gesture is vertical and held down ──
             const downDist = touchY - touchStartY;
-            const horizDist = Math.abs(touchX - touchStartX);
-            // Only soft drop if vertical movement dominates horizontal
-            if (downDist > cellPx && downDist > horizDist * 1.5 && elapsed > SOFT_DROP_DELAY) {
+            if (gestureDir === "vertical" && downDist > cellPx && elapsed > SOFT_DROP_DELAY) {
               if (!isSoftDropping) {
                 isSoftDropping = true;
                 keys["down"] = true;
               }
               hasMoved = true;
-            } else if (isSoftDropping && (downDist < cellPx * 0.3 || horizDist > downDist)) {
-              // Cancel soft drop if dragged back up OR gesture became horizontal
+            } else if (isSoftDropping && downDist < cellPx * 0.3) {
               isSoftDropping = false;
               keys["down"] = false;
             }
