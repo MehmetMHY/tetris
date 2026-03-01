@@ -30,26 +30,26 @@
 
 **Desktop (Keyboard)**
 
-| Action | Keys |
-|---|---|
-| Move | `←` `→` or `A` `D` |
-| Soft Drop | `↓` or `S` |
-| Hard Drop | `Space` |
-| Rotate CW | `↑` `W` `X` |
-| Rotate CCW | `Z` |
-| Hold | `C` or `LShift` |
-| Mute | `M` |
-| Pause | `Esc` or `P` |
+| Action     | Keys               |
+| ---------- | ------------------ |
+| Move       | `←` `→` or `A` `D` |
+| Soft Drop  | `↓` or `S`         |
+| Hard Drop  | `Space`            |
+| Rotate CW  | `↑` `W` `X`        |
+| Rotate CCW | `Z`                |
+| Hold       | `C` or `LShift`    |
+| Mute       | `M`                |
+| Pause      | `Esc` or `P`       |
 
 **Mobile (Touch)**
 
-| Action | Gesture |
-|---|---|
-| Move | Swipe left / right |
+| Action    | Gesture            |
+| --------- | ------------------ |
+| Move      | Swipe left / right |
 | Soft Drop | Hold and drag down |
-| Hard Drop | Quick flick down |
-| Rotate CW | Tap |
-| Hold | Quick flick up |
+| Hard Drop | Quick flick down   |
+| Rotate CW | Tap                |
+| Hold      | Quick flick up     |
 
 ## How To Run Locally
 
