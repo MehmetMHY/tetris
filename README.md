@@ -1,3 +1,5 @@
+<!-- NOTE: this README was designed for GitHub's markdown renderer -->
+
 <div id="user-content-toc" align="center">
   <img src="./logo.png" width="175">
   <ul>
