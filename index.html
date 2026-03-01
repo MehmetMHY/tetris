@@ -184,8 +184,7 @@
         }
 
         .box-buttons .mute-btn,
-        .box-buttons .settings-btn,
-        .box-buttons .hold-btn {
+        .box-buttons .settings-btn {
           flex: 1;
           font-size: 9px;
           font-weight: bold;
@@ -210,8 +209,7 @@
         }
 
         .box-buttons .mute-btn:active,
-        .box-buttons .settings-btn:active,
-        .box-buttons .hold-btn:active {
+        .box-buttons .settings-btn:active {
           background: #2a2a4e;
           color: #fff;
         }
@@ -419,10 +417,6 @@
         gap: 8px;
       }
 
-      .hold-btn {
-        display: none;
-      }
-
       .mute-btn,
       .settings-btn {
         flex: 1;
@@ -557,7 +551,6 @@
         <div class="button-group box-buttons">
           <button class="settings-btn" id="pause-btn">Pause</button>
           <button class="mute-btn" id="mute-btn">Mute</button>
-          <button class="hold-btn" id="hold-btn">Hold</button>
         </div>
       </div>
     </div>
@@ -712,11 +705,6 @@
           if (started && !gameOver) togglePause();
         });
 
-        const holdBtn = document.getElementById("hold-btn");
-        holdBtn.addEventListener("click", () => {
-          holdBtn.blur();
-          if (started && !gameOver && !paused) holdPiece();
-        });
 
         applyMute();
 
@@ -1865,20 +1853,25 @@
               return;
             }
 
-            // ── Flick = Hard Drop ──
-            // Fast vertical velocity (either direction) = hard drop
+            // ── Flick detection ──
             const speed = Math.abs(velocityY); // px/ms
             if (
               speed > 0.8 &&
               Math.abs(diffY) > 25 &&
               Math.abs(diffY) > Math.abs(diffX) * 0.8
             ) {
-              // Undo any horizontal drift from the flick gesture
-              const shape = getShape(currentType, currentRotation);
-              if (!collides(shape, pieceXAtTouchStart, currentY)) {
-                currentX = pieceXAtTouchStart;
+              if (diffY < 0) {
+                // Flick UP = Hold piece
+                holdPiece();
+              } else {
+                // Flick DOWN = Hard drop
+                // Undo any horizontal drift from the flick gesture
+                const shape = getShape(currentType, currentRotation);
+                if (!collides(shape, pieceXAtTouchStart, currentY)) {
+                  currentX = pieceXAtTouchStart;
+                }
+                hardDrop();
               }
-              hardDrop();
             }
           },
           { passive: false },
