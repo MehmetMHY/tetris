@@ -1786,8 +1786,20 @@
               gestureDir = totalDY > totalDX ? "vertical" : "horizontal";
             }
 
-            // ── Horizontal: only if gesture is horizontal ──
-            if (gestureDir !== "vertical") {
+            // When piece is on the ground, unlock gesture so player can
+            // slide horizontally even if they started with a vertical drag
+            const shape = getShape(currentType, currentRotation);
+            const pieceOnGround = collides(shape, currentX, currentY + 1);
+            const allowHorizontal = gestureDir !== "vertical" || pieceOnGround;
+
+            // ── Horizontal movement ──
+            if (allowHorizontal) {
+              // If switching from vertical to horizontal mid-gesture,
+              // reset the drag anchor so the piece doesn't jump
+              if (gestureDir === "vertical" && pieceOnGround) {
+                lastDragX = touchX;
+                gestureDir = "none";
+              }
               while (touchX - lastDragX >= hThreshold) {
                 if (moveRight()) {
                   lastDragX += hThreshold;

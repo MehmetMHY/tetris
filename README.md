@@ -1,7 +1,7 @@
 <!-- NOTE: this README was designed for GitHub's markdown renderer -->
 
 <div id="user-content-toc" align="center">
-  <img src="./logo.png" width="175">
+  <img src="./assets/logo.png" width="175">
   <ul>
     <summary><h1>Tetris</h1></summary>
   </ul>
@@ -9,12 +9,12 @@
 
 ## About
 
-[Tetris](https://en.wikipedia.org/wiki/Tetris) is a legendary game and one that I enjoy very much. I really love the game and enjoy playing it, it's a great stress reliever, so for a fun weekend project I decided to build the game, as a browser game/app designed for Desktop, using the principles of [vibe coding](https://en.wikipedia.org/wiki/Vibe_coding).
+[Tetris](https://en.wikipedia.org/wiki/Tetris) is a legendary game and one that I enjoy very much. I really love the game and enjoy playing it, it's a great stress reliever, so for a fun weekend project I decided to build the game as a browser game/app designed for both Desktop and Mobile, using the principles of [vibe coding](https://en.wikipedia.org/wiki/Vibe_coding).
 
 ## Features
 
-- Classic 10x20 Tetris board with smooth keyboard controls
-- Mobile support with responsive layout and touch controls
+- Classic 10x20 Tetris board
+- Full keyboard controls on Desktop and touch gesture controls on Mobile
 - Standard seven-bag piece randomizer
 - Hold piece and next piece previews
 - Ghost piece projection showing where pieces will land
@@ -24,6 +24,32 @@
 - Pause menu with resume, restart, and quit options
 - Line clear flash animation
 - Background music with mute toggle (state persisted)
+- iOS safe area support (Dynamic Island, notch, home indicator)
+
+## Controls
+
+**Desktop (Keyboard)**
+
+| Action | Keys |
+|---|---|
+| Move | `←` `→` or `A` `D` |
+| Soft Drop | `↓` or `S` |
+| Hard Drop | `Space` |
+| Rotate CW | `↑` `W` `X` |
+| Rotate CCW | `Z` |
+| Hold | `C` or `LShift` |
+| Mute | `M` |
+| Pause | `Esc` or `P` |
+
+**Mobile (Touch)**
+
+| Action | Gesture |
+|---|---|
+| Move | Swipe left / right |
+| Soft Drop | Hold and drag down |
+| Hard Drop | Quick flick down |
+| Rotate CW | Tap |
+| Hold | Quick flick up |
 
 ## How To Run Locally
 
@@ -43,11 +69,13 @@ The script starts a local Python HTTP server and opens the game in your browser.
 
 ## Implementation Notes
 
-- Responsive design optimized for both Desktop and Mobile
+- Responsive design optimized for both Desktop and Mobile (portrait)
 - Pre-rendered block sprites and grid background for performance
 - Uses Super Rotation System (SRS) style wall kicks for piece rotation
+- Velocity-based touch gesture detection for reliable flick vs drag distinction
 - Level-based timing system for gravity speed and lock delay
 - High scores and mute state persisted with `localStorage`
+- Assets (icons, audio) live in the `assets/` directory with a `convert.sh` script for regenerating icons from `logo.png` via ImageMagick
 - Background music source: [NmCCQxVBfyM](https://www.youtube.com/watch?v=NmCCQxVBfyM)
 
 ## License
