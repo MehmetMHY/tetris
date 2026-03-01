@@ -170,24 +170,28 @@
           object-fit: contain;
         }
 
-        /* Stacked Buttons - Split Card Look - Borderless */
+        /* Stacked Buttons Card */
         .box-buttons {
           display: flex;
           flex-direction: column;
           gap: 0;
           background: #1a1a2e;
-          border: none; /* Removed border as requested */
-          border-radius: 8px;
+          border: 2px solid #333;
+          border-radius: 4px;
           padding: 0;
           height: 60px;
           overflow: hidden;
         }
 
-        .mute-btn,
-        .settings-btn,
-        .hold-btn {
+        .box-buttons .mute-btn,
+        .box-buttons .settings-btn,
+        .box-buttons .hold-btn {
           flex: 1;
-          font-size: 10px;
+          font-size: 9px;
+          font-weight: bold;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          color: #aaa;
           padding: 0;
           display: flex;
           align-items: center;
@@ -201,19 +205,15 @@
           min-height: 0;
         }
 
-        .box-buttons button {
-          border-bottom: 1px solid #333;
+        .box-buttons button + button {
+          border-top: 1px solid #333;
         }
 
-        .box-buttons button:last-child {
-          border-bottom: none;
-        }
-
-        /* Interactive states for mobile buttons */
-        .mute-btn:active,
-        .settings-btn:active,
-        .hold-btn:active {
-          background: #3a3a6e;
+        .box-buttons .mute-btn:active,
+        .box-buttons .settings-btn:active,
+        .box-buttons .hold-btn:active {
+          background: #2a2a4e;
+          color: #fff;
         }
 
         /* Hide desktop-only text in overlay */
@@ -1806,15 +1806,18 @@
               }
             }
 
-            // ── Soft drop: only after holding down for SOFT_DROP_DELAY ──
+            // ── Soft drop: only when dragging mostly downward ──
             const downDist = touchY - touchStartY;
-            if (downDist > cellPx && elapsed > SOFT_DROP_DELAY) {
+            const horizDist = Math.abs(touchX - touchStartX);
+            // Only soft drop if vertical movement dominates horizontal
+            if (downDist > cellPx && downDist > horizDist * 1.5 && elapsed > SOFT_DROP_DELAY) {
               if (!isSoftDropping) {
                 isSoftDropping = true;
                 keys["down"] = true;
               }
               hasMoved = true;
-            } else if (isSoftDropping && downDist < cellPx * 0.3) {
+            } else if (isSoftDropping && (downDist < cellPx * 0.3 || horizDist > downDist)) {
+              // Cancel soft drop if dragged back up OR gesture became horizontal
               isSoftDropping = false;
               keys["down"] = false;
             }
