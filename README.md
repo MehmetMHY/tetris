@@ -4,8 +4,6 @@
 
 <h1 align="center">Tetris</h1>
 
-<p align="center"><em>A lightweight Tetris clone</em></p>
-
 ## About
 
 [Tetris](https://en.wikipedia.org/wiki/Tetris) is a legendary game and one that I enjoy very much. I really love the game and enjoy playing it, it's a great stress reliever, so for a fun weekend project I decided to build the game, as a browser game/app designed for Desktop, using the principles of [vibe coding](https://en.wikipedia.org/wiki/Vibe_coding).
@@ -28,7 +26,6 @@
 From the project directory run
 
 ```bash
-# NOTE: pythons used to run a lightweight web server
 bash run.sh
 ```
 
