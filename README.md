@@ -1,8 +1,9 @@
-<p align="center">
+<div id="user-content-toc" align="center">
   <img src="./logo.png" width="175">
-</p>
-
-<h1 align="center">Tetris</h1>
+  <ul>
+    <summary><h1>Tetris</h1></summary>
+  </ul>
+</div>
 
 ## About
 
