@@ -11,6 +11,12 @@
 
 [Tetris](https://en.wikipedia.org/wiki/Tetris) is a legendary game and one that I enjoy very much. I really love the game and enjoy playing it; it is a great stress reliever. For a fun weekend project, I decided to build the game as a browser game/app designed for both Desktop and Mobile, using the principles of [vibe coding](https://en.wikipedia.org/wiki/Vibe_coding). The overall feel of this version of Tetris was inspired by [Play Tetris](https://play.tetris.com/).
 
+## Why I Built This
+
+Tetris has been one of the few things that reliably helps me when I am really stressed, whether from work or life. Instead of stress eating junk food or binge watching YouTube and TV, I can play for about 10 to 30 minutes and feel like my brain has been cleared out a bit. It is not just casual unwinding for me, it is a way to have something simple and focused to pour that stress into. There is even some cool research showing Tetris can affect how the brain handles intrusive memories and stress, for example with trauma film experiments in the lab ([Holmes et al 2009](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0004153)), in people seen in an emergency department after real accidents ([Iyadurai et al 2018](https://doi.org/10.1038/mp.2017.23)), and as an add on to therapy that was linked to changes in the hippocampus ([Butler et al 2020](https://pmc.ncbi.nlm.nih.gov/articles/PMC7828932/)). I am not trying to turn this game into a medical treatment, I just like that a thing that already works for me as a healthy outlet also happens to be studied in interesting ways.
+
+The problem was that there was no version that fit how I wanted to play. Mobile apps on the iOS App Store are full of ads and microtransactions, web versions often lag or feel bad on mobile, and the best classic implementations like [Tetris (NES 1989)](<https://en.wikipedia.org/wiki/Tetris_(NES_video_game)>) require emulators and extra hardware. I even bought a [Miyoo Mini](https://officialmiyoomini.com/) and found that I mostly just played Tetris on it, while having to carry another device around. With modern browsers, LLM tools like Claude Code CLI, and workflows like vibe coding, it finally felt like the right time to build the Tetris I actually wanted myself, one that is fast, minimal, runs in a browser on desktop and mobile, fully open source, and under my control instead of tied to ads, an app store, or some random website. In about a day I was able to put this together, and I am sharing it in the hope that it can be a small, healthy outlet for other people too when they are stressed and need to clear their head.
+
 ## Features
 
 - Classic 10x20 Tetris board
@@ -78,7 +84,7 @@ _The script starts a local Python HTTP server and opens the game in your browser
 - Level-based timing system for gravity speed and lock delay
 - High scores and mute state persisted with `localStorage`
 - Assets (icons, audio) live in the `assets/` directory
-- Background music source: [NmCCQxVBfyM](https://www.youtube.com/watch?v=NmCCQxVBfyM)
+- Background music source [NmCCQxVBfyM](https://www.youtube.com/watch?v=NmCCQxVBfyM)
 
 ## License
 
