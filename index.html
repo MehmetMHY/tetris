@@ -697,7 +697,12 @@
           (e) => {
             const now = Date.now();
             if (now - lastTouchEnd <= 300) {
-              e.preventDefault();
+              // Only prevent zoom on the game canvas area — NOT on buttons,
+              // overlays, or panel boxes, otherwise the suppressed click event
+              // makes UI taps fail when they happen within 300ms of each other.
+              if (!e.target.closest("button, .overlay, .panel-box, .menu-btn, .level-selector")) {
+                e.preventDefault();
+              }
             }
             lastTouchEnd = now;
           },
@@ -1793,10 +1798,15 @@
         //   4. Velocity is computed from a rolling window, not just
         //      start-to-end, for accurate intent detection.
 
-        function getCellPx() {
+        // Cache cellPx to avoid getBoundingClientRect() reflow on every touchmove
+        let cachedCellPx = BLOCK; // default fallback
+        function updateCellPx() {
           const rect = boardCanvas.getBoundingClientRect();
-          return rect.width / COLS;
+          if (rect.width > 0) cachedCellPx = rect.width / COLS;
         }
+        window.addEventListener("resize", updateCellPx);
+        window.addEventListener("orientationchange", () => setTimeout(updateCellPx, 100));
+        setTimeout(updateCellPx, 0);
 
         // Touch state
         let touchId = null;
@@ -1804,12 +1814,12 @@
           touchStartY = 0;
         let touchStartTime = 0;
         let touchPhase = "IDLE"; // IDLE | UNDECIDED | HORIZONTAL | VERTICAL
-        let hAnchorX = 0; // screen X anchor for cell-based horizontal moves
-        let frozenX = 0; // the piece's X when we freeze horizontal movement
+        let hAnchorX = 0; // client X anchor for cell-based horizontal moves
+        let vAnchorY = 0; // client Y anchor for soft drop distance (set on VERTICAL entry)
         let isSoftDropping = false;
         let hasMoved = false;
 
-        // Rolling history for velocity (last ~80ms)
+        // Rolling history for velocity (last ~120ms)
         let touchSamples = []; // [{x, y, t}, ...]
         const SAMPLE_WINDOW = 120; // ms
 
@@ -1821,7 +1831,7 @@
         const FLICK_MIN_DIST = 50; // min px of total downward travel for flick
         const TAP_MAX_DIST = 14; // max px drift for a tap
         const TAP_MAX_TIME = 250; // max ms for a tap
-        const H_TO_V_VEL = 0.5; // px/ms vertical velocity to transition H→V
+        const H_TO_V_VEL = 0.8; // px/ms vertical velocity to transition H→V (raised from 0.5)
 
         function isUIElement(e) {
           return (
@@ -1862,9 +1872,12 @@
           };
         }
 
-        function enterVerticalPhase() {
+        function enterVerticalPhase(clientY) {
           touchPhase = "VERTICAL";
-          frozenX = currentX; // snapshot — this X is locked
+          // Set vAnchorY to where the vertical phase actually began, NOT
+          // where the entire touch started. Prevents accidental soft drop
+          // when transitioning from HORIZONTAL (finger already drifted down).
+          vAnchorY = clientY;
         }
 
         document.addEventListener(
@@ -1875,16 +1888,16 @@
 
             const t = e.changedTouches[0];
             touchId = t.identifier;
-            touchStartX = t.screenX;
-            touchStartY = t.screenY;
+            touchStartX = t.clientX;
+            touchStartY = t.clientY;
             touchStartTime = performance.now();
             touchPhase = "UNDECIDED";
-            hAnchorX = t.screenX;
-            frozenX = currentX;
+            hAnchorX = t.clientX;
+            vAnchorY = t.clientY;
             isSoftDropping = false;
             hasMoved = false;
             touchSamples = [
-              { x: t.screenX, y: t.screenY, t: performance.now() },
+              { x: t.clientX, y: t.clientY, t: performance.now() },
             ];
           },
           { passive: false },
@@ -1900,8 +1913,8 @@
             const t = getTrackedTouch(e);
             if (!t) return;
 
-            const x = t.screenX;
-            const y = t.screenY;
+            const x = t.clientX;
+            const y = t.clientY;
             addSample(x, y);
 
             // During line-clear animation, keep tracking finger position
@@ -1911,12 +1924,13 @@
               hAnchorX = x;
               touchStartX = x;
               touchStartY = y;
+              vAnchorY = y;
               return;
             }
 
             const totalDX = x - touchStartX;
             const totalDY = y - touchStartY;
-            const cellPx = getCellPx();
+            const cellPx = cachedCellPx;
 
             // ── UNDECIDED: wait for enough movement to classify ──
             if (touchPhase === "UNDECIDED") {
@@ -1932,7 +1946,7 @@
               const isVertical = absAngle > 30 && absAngle < 150;
 
               if (isVertical) {
-                enterVerticalPhase();
+                enterVerticalPhase(y);
                 hasMoved = true;
               } else {
                 touchPhase = "HORIZONTAL";
@@ -1947,7 +1961,6 @@
               while (x - hAnchorX >= hThresh) {
                 if (moveRight()) {
                   hAnchorX += hThresh;
-                  frozenX = currentX; // update frozen in case we transition to V
                 } else {
                   hAnchorX = x;
                   break;
@@ -1956,7 +1969,6 @@
               while (hAnchorX - x >= hThresh) {
                 if (moveLeft()) {
                   hAnchorX -= hThresh;
-                  frozenX = currentX;
                 } else {
                   hAnchorX = x;
                   break;
@@ -1970,7 +1982,7 @@
                 vel.vy > H_TO_V_VEL &&
                 Math.abs(vel.vy) > Math.abs(vel.vx) * 1.5
               ) {
-                enterVerticalPhase();
+                enterVerticalPhase(y);
               }
             }
 
@@ -1986,7 +1998,6 @@
                 while (x - hAnchorX >= hThresh) {
                   if (moveRight()) {
                     hAnchorX += hThresh;
-                    frozenX = currentX;
                   } else {
                     hAnchorX = x;
                     break;
@@ -1995,23 +2006,23 @@
                 while (hAnchorX - x >= hThresh) {
                   if (moveLeft()) {
                     hAnchorX -= hThresh;
-                    frozenX = currentX;
                   } else {
                     hAnchorX = x;
                     break;
                   }
                 }
               } else {
-                // Still falling — freeze horizontal position, but keep
-                // hAnchorX tracking the finger so it's ready when piece lands.
-                if (!collides(shape, frozenX, currentY)) {
-                  currentX = frozenX;
-                }
+                // Still falling — horizontal position is frozen. Don't force
+                // currentX to a stale frozenX (which causes teleporting if a
+                // new piece spawned mid-touch). Just track hAnchorX so
+                // horizontal sliding is ready when the piece lands.
                 hAnchorX = x;
               }
 
-              // Soft drop activation
-              const downDist = y - touchStartY;
+              // Soft drop activation — measured from vAnchorY (where the
+              // VERTICAL phase began), not touchStartY. This prevents
+              // accidental soft drop during H→V transitions.
+              const downDist = y - vAnchorY;
               if (downDist > cellPx * SOFT_DROP_DIST) {
                 if (!isSoftDropping) {
                   isSoftDropping = true;
@@ -2049,16 +2060,18 @@
             )
               return;
 
-            const x = t.screenX;
-            const y = t.screenY;
+            const x = t.clientX;
+            const y = t.clientY;
             addSample(x, y);
             const totalDX = x - touchStartX;
             const totalDY = y - touchStartY;
             const duration = performance.now() - touchStartTime;
 
             // ── TAP detection ──
+            // Removed the !hasMoved guard: gestures that moved 8-13px (past
+            // CLASSIFY_DIST but under TAP_MAX_DIST) are still taps by
+            // distance/time criteria. The distance check alone is sufficient.
             if (
-              !hasMoved &&
               duration < TAP_MAX_TIME &&
               Math.abs(totalDX) < TAP_MAX_DIST &&
               Math.abs(totalDY) < TAP_MAX_DIST
@@ -2096,13 +2109,6 @@
               totalDY > FLICK_MIN_DIST &&
               absVelY > Math.abs(vel.vx) * 1.5
             ) {
-              // If we were in VERTICAL, keep frozenX
-              if (endPhase === "VERTICAL") {
-                const shape = getShape(currentType, currentRotation);
-                if (!collides(shape, frozenX, currentY)) {
-                  currentX = frozenX;
-                }
-              }
               hardDrop();
               return;
             }
@@ -2284,6 +2290,7 @@
 
           applyMute();
           startAudio();
+          updateCellPx();
           updateUI();
           spawn();
 
