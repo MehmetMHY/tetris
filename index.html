@@ -700,7 +700,11 @@
               // Only prevent zoom on the game canvas area — NOT on buttons,
               // overlays, or panel boxes, otherwise the suppressed click event
               // makes UI taps fail when they happen within 300ms of each other.
-              if (!e.target.closest("button, .overlay, .panel-box, .menu-btn, .level-selector")) {
+              if (
+                !e.target.closest(
+                  "button, .overlay, .panel-box, .menu-btn, .level-selector",
+                )
+              ) {
                 e.preventDefault();
               }
             }
@@ -1805,7 +1809,9 @@
           if (rect.width > 0) cachedCellPx = rect.width / COLS;
         }
         window.addEventListener("resize", updateCellPx);
-        window.addEventListener("orientationchange", () => setTimeout(updateCellPx, 100));
+        window.addEventListener("orientationchange", () =>
+          setTimeout(updateCellPx, 100),
+        );
         setTimeout(updateCellPx, 0);
 
         // Touch state
