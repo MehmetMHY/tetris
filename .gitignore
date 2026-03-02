@@ -3,6 +3,7 @@
 venv/
 env/
 .claude/
+.gemini/
 ch_*
 .tmp/
 tmp_*

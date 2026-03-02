@@ -665,8 +665,19 @@
     <script>
       // ─── iOS Safe Area + Zoom Fix ───
       (() => {
-        // Prevent double-tap zoom on iOS Safari
+        // Prevent double-tap zoom and multi-touch pinch on iOS Safari
         let lastTouchEnd = 0;
+
+        document.addEventListener(
+          "touchstart",
+          (e) => {
+            if (e.touches.length > 1) {
+              e.preventDefault();
+            }
+          },
+          { passive: false },
+        );
+
         document.addEventListener(
           "touchend",
           (e) => {
@@ -678,6 +689,17 @@
           },
           { passive: false },
         );
+
+        // Prevent Safari gesture zooming (pinch)
+        document.addEventListener("gesturestart", function (e) {
+          e.preventDefault();
+        });
+        document.addEventListener("gesturechange", function (e) {
+          e.preventDefault();
+        });
+        document.addEventListener("gestureend", function (e) {
+          e.preventDefault();
+        });
 
         // Detect iOS and apply Dynamic Island / notch padding if safe-area is 0
         const isIOS =
