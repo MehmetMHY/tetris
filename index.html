@@ -1811,14 +1811,14 @@
 
         // Rolling history for velocity (last ~80ms)
         let touchSamples = []; // [{x, y, t}, ...]
-        const SAMPLE_WINDOW = 80; // ms
+        const SAMPLE_WINDOW = 120; // ms
 
         // Tuning constants
         const CLASSIFY_DIST = 14; // px before we classify gesture
         const H_CELL_RATIO = 0.65; // fraction of cell width per horizontal move
         const SOFT_DROP_DIST = 1.0; // cells of downward drag to start soft drop
-        const FLICK_VEL_THRESH = 0.6; // px/ms vertical velocity for hard drop
-        const FLICK_MIN_DIST = 30; // min px of total downward travel for flick
+        const FLICK_VEL_THRESH = 1.2; // px/ms vertical velocity for hard drop
+        const FLICK_MIN_DIST = 50; // min px of total downward travel for flick
         const TAP_MAX_DIST = 14; // max px drift for a tap
         const TAP_MAX_TIME = 250; // max ms for a tap
         const H_TO_V_VEL = 0.5; // px/ms vertical velocity to transition H→V
@@ -2049,24 +2049,17 @@
               return;
             }
 
-            // Downward flick = hard drop
+            // Downward flick = hard drop (only from VERTICAL phase or UNDECIDED)
+            // Never hard drop from HORIZONTAL phase — horizontal slides that
+            // drift downward when lifting the finger must not trigger drops.
             if (
+              endPhase !== "HORIZONTAL" &&
               vel.vy > FLICK_VEL_THRESH &&
               totalDY > FLICK_MIN_DIST &&
-              absVelY > Math.abs(vel.vx) * 0.6
+              absVelY > Math.abs(vel.vx) * 1.5
             ) {
-              // If we were in VERTICAL or transitioning, keep frozenX
+              // If we were in VERTICAL, keep frozenX
               if (endPhase === "VERTICAL") {
-                const shape = getShape(currentType, currentRotation);
-                if (!collides(shape, frozenX, currentY)) {
-                  currentX = frozenX;
-                }
-              }
-              // If we were in HORIZONTAL and flicking down (L-shape),
-              // the H→V transition in touchmove should have already frozen X.
-              // But if the flick was so fast that touchmove didn't catch it,
-              // use the last frozenX (which was updated during horizontal moves).
-              if (endPhase === "HORIZONTAL") {
                 const shape = getShape(currentType, currentRotation);
                 if (!collides(shape, frozenX, currentY)) {
                   currentX = frozenX;
