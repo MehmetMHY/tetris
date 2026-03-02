@@ -67,6 +67,7 @@ _The script starts a local Python HTTP server and opens the game in your browser
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli)
 - [Cha CLI](https://github.com/MehmetMHY/ch)
 - [xAI Grok Web App](https://grok.com/) _(logos/icons)_
+- [Perplexity](https://www.perplexity.ai/) _(research bugs)_
 
 ## Implementation Notes
 
