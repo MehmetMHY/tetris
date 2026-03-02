@@ -106,10 +106,10 @@
             env(safe-area-inset-bottom, 0px),
             var(--ios-bottom-inset, 0px)
           );
-          padding-left: calc(6px + env(safe-area-inset-left, 0px));
-          padding-right: calc(6px + env(safe-area-inset-right, 0px));
+          padding-left: max(6px, env(safe-area-inset-left, 0px));
+          padding-right: max(6px, env(safe-area-inset-right, 0px));
           height: 100dvh;
-          width: 100vw;
+          width: 100%; /* Changed from 100vw to prevent iOS overflow/cutoff */
           box-sizing: border-box;
           justify-content: stretch;
           align-items: stretch;
@@ -146,8 +146,7 @@
           justify-content: center;
           align-items: stretch; /* Stretch to fill */
           padding: 0;
-          margin: 0 calc(-6px - env(safe-area-inset-right, 0px)) 0
-            calc(-6px - env(safe-area-inset-left, 0px)); /* Negative margin to keep board edge-to-edge despite container padding */
+          margin: 0; /* Removed negative margins to fix grid clipping */
           border: none;
           border-top: 2px solid #333; /* Visual separator from top HUD */
           border-radius: 0; /* Square edges for edge-to-edge */
@@ -667,13 +666,28 @@
       (() => {
         // Prevent double-tap zoom and multi-touch pinch on iOS Safari
         let lastTouchEnd = 0;
+        let lastTouchStart = 0;
+
+        // The ultimate Smart Zoom blocker for iOS 17+ Safari
+        document.addEventListener(
+          "dblclick",
+          (e) => {
+            e.preventDefault();
+          },
+          { passive: false },
+        );
 
         document.addEventListener(
           "touchstart",
           (e) => {
+            const now = Date.now();
             if (e.touches.length > 1) {
               e.preventDefault();
+            } else if (now - lastTouchStart <= 300) {
+              // Block double-tap to zoom at the start of the gesture
+              e.preventDefault();
             }
+            lastTouchStart = now;
           },
           { passive: false },
         );
@@ -689,7 +703,6 @@
           },
           { passive: false },
         );
-
         // Prevent Safari gesture zooming (pinch)
         document.addEventListener("gesturestart", function (e) {
           e.preventDefault();

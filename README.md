@@ -28,7 +28,7 @@
 
 ## Controls
 
-**Desktop (Keyboard)**
+### Desktop (Keyboard)
 
 | Action     | Keys               |
 | ---------- | ------------------ |
@@ -41,7 +41,7 @@
 | Mute       | `M`                |
 | Pause      | `Esc` or `P`       |
 
-**Mobile (Touch)**
+### Mobile (Touch)
 
 | Action    | Gesture            |
 | --------- | ------------------ |
@@ -59,14 +59,14 @@ From the project directory run
 bash run.sh
 ```
 
-The script starts a local Python HTTP server and opens the game in your browser. You can also open `index.html` directly in a browser, although some browsers may restrict audio autoplay or local file APIs.
+_The script starts a local Python HTTP server and opens the game in your browser. You can also open `index.html` directly in a browser._
 
 ## Built With
 
 - [Claude Code CLI](https://code.claude.com/docs/en/overview)
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli)
 - [Cha CLI](https://github.com/MehmetMHY/ch)
-- [xAI Grok Web App](https://grok.com/) _(generate logos/icons)_
+- [xAI Grok Web App](https://grok.com/) _(logos/icons)_
 
 ## Implementation Notes
 
