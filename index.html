@@ -1814,7 +1814,7 @@
         const SAMPLE_WINDOW = 120; // ms
 
         // Tuning constants
-        const CLASSIFY_DIST = 14; // px before we classify gesture
+        const CLASSIFY_DIST = 8; // px before we classify gesture
         const H_CELL_RATIO = 0.65; // fraction of cell width per horizontal move
         const SOFT_DROP_DIST = 1.0; // cells of downward drag to start soft drop
         const FLICK_VEL_THRESH = 1.2; // px/ms vertical velocity for hard drop
@@ -1893,7 +1893,7 @@
         document.addEventListener(
           "touchmove",
           (e) => {
-            if (!started || paused || gameOver || animatingLines) return;
+            if (!started || paused || gameOver) return;
             if (isUIElement(e)) return;
             e.preventDefault();
 
@@ -1903,6 +1903,16 @@
             const x = t.screenX;
             const y = t.screenY;
             addSample(x, y);
+
+            // During line-clear animation, keep tracking finger position
+            // but don't apply any moves. Reset anchors so that when the
+            // animation ends the gesture resumes from the current finger pos.
+            if (animatingLines) {
+              hAnchorX = x;
+              touchStartX = x;
+              touchStartY = y;
+              return;
+            }
 
             const totalDX = x - touchStartX;
             const totalDY = y - touchStartY;
@@ -1964,12 +1974,40 @@
               }
             }
 
-            // ── VERTICAL phase: soft drop, NO horizontal movement ──
+            // ── VERTICAL phase: soft drop + horizontal sliding on ground ──
             if (touchPhase === "VERTICAL") {
-              // Ensure piece stays at frozenX (undo any drift from gravity/other)
               const shape = getShape(currentType, currentRotation);
-              if (!collides(shape, frozenX, currentY)) {
-                currentX = frozenX;
+              const onGround = collides(shape, currentX, currentY + 1);
+
+              if (onGround) {
+                // Piece is on ground during lock delay — allow horizontal
+                // sliding so the player can reposition before it locks.
+                const hThresh = cellPx * H_CELL_RATIO;
+                while (x - hAnchorX >= hThresh) {
+                  if (moveRight()) {
+                    hAnchorX += hThresh;
+                    frozenX = currentX;
+                  } else {
+                    hAnchorX = x;
+                    break;
+                  }
+                }
+                while (hAnchorX - x >= hThresh) {
+                  if (moveLeft()) {
+                    hAnchorX -= hThresh;
+                    frozenX = currentX;
+                  } else {
+                    hAnchorX = x;
+                    break;
+                  }
+                }
+              } else {
+                // Still falling — freeze horizontal position, but keep
+                // hAnchorX tracking the finger so it's ready when piece lands.
+                if (!collides(shape, frozenX, currentY)) {
+                  currentX = frozenX;
+                }
+                hAnchorX = x;
               }
 
               // Soft drop activation
@@ -2067,6 +2105,25 @@
               }
               hardDrop();
               return;
+            }
+          },
+          { passive: false },
+        );
+
+        // ── Touch cancel safety net ──
+        // iOS can cancel touches (system gestures, notifications, etc.).
+        // Without this, touchId is never reset and all future touches are ignored.
+        document.addEventListener(
+          "touchcancel",
+          (e) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+              if (e.changedTouches[i].identifier === touchId) {
+                touchId = null;
+                touchPhase = "IDLE";
+                keys["down"] = false;
+                isSoftDropping = false;
+                break;
+              }
             }
           },
           { passive: false },
