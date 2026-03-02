@@ -36,12 +36,20 @@
         margin: 0;
         padding: 0;
         box-sizing: border-box;
-        -ms-touch-action: manipulation;
-        touch-action: manipulation;
+        -ms-touch-action: none;
+        touch-action: none;
         -webkit-tap-highlight-color: transparent;
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         user-select: none;
+      }
+
+      html,
+      body {
+        touch-action: none;
+        position: fixed;
+        width: 100%;
+        height: 100%;
       }
 
       body {
@@ -79,7 +87,7 @@
           display: block;
           padding: 0;
           overflow: hidden; /* Prevent scrolling */
-          background: #000;
+          background: #18181b; /* Zinc-900: distinct from game background */
         }
 
         .game-container {
@@ -105,6 +113,7 @@
           box-sizing: border-box;
           justify-content: stretch;
           align-items: stretch;
+          background: transparent;
         }
 
         /* Flatten panels for grid */
@@ -137,12 +146,13 @@
           justify-content: center;
           align-items: stretch; /* Stretch to fill */
           padding: 0;
-          margin: 0 calc(-6px - env(safe-area-inset-right)) 0
-            calc(-6px - env(safe-area-inset-left)); /* Negative margin to keep board edge-to-edge despite container padding */
+          margin: 0 calc(-6px - env(safe-area-inset-right, 0px)) 0
+            calc(-6px - env(safe-area-inset-left, 0px)); /* Negative margin to keep board edge-to-edge despite container padding */
           border: none;
+          border-top: 2px solid #333; /* Visual separator from top HUD */
           border-radius: 0; /* Square edges for edge-to-edge */
-          box-shadow: none;
-          background: transparent;
+          box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
+          background: #000; /* Pitch black behind the game board */
           overflow: hidden;
         }
 

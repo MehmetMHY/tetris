@@ -76,7 +76,7 @@ The script starts a local Python HTTP server and opens the game in your browser.
 - Velocity-based touch gesture detection for reliable flick vs drag distinction
 - Level-based timing system for gravity speed and lock delay
 - High scores and mute state persisted with `localStorage`
-- Assets (icons, audio) live in the `assets/` directory with a `convert.sh` script for regenerating icons from `logo.png` via ImageMagick
+- Assets (icons, audio) live in the `assets/` directory
 - Background music source: [NmCCQxVBfyM](https://www.youtube.com/watch?v=NmCCQxVBfyM)
 
 ## License
