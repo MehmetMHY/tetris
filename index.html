@@ -1778,37 +1778,49 @@
         });
 
         // ─── Touch Controls ───
-        // Official play.tetris.com style:
-        //   Swipe left/right  = move
-        //   Hold & drag down  = soft drop (delayed activation)
-        //   Quick flick down  = hard drop
-        //   Quick flick up    = hard drop
-        //   Tap               = rotate CW
+        // Phase-based touch architecture to prevent J-hook/L-shape misdrops.
+        //
+        // Phases:  IDLE → UNDECIDED → HORIZONTAL | VERTICAL | TAP
+        //
+        // Key principles:
+        //   1. During UNDECIDED, accumulate movement but don't act until we
+        //      have enough data to classify confidently.
+        //   2. Once in VERTICAL phase, horizontal position is FROZEN — no
+        //      horizontal moves are applied regardless of thumb drift.
+        //   3. HORIZONTAL → VERTICAL transition is allowed (L-shape move):
+        //      when the user was sliding horizontally and starts moving
+        //      downward fast, we snapshot X and freeze it.
+        //   4. Velocity is computed from a rolling window, not just
+        //      start-to-end, for accurate intent detection.
 
         function getCellPx() {
           const rect = boardCanvas.getBoundingClientRect();
           return rect.width / COLS;
         }
 
+        // Touch state
         let touchId = null;
         let touchStartX = 0, touchStartY = 0;
-        let lastX = 0, lastY = 0;
-        let gestureDir = "none"; // "horizontal" | "vertical" | "none"
-        let stableX = 0;
-        let flickStartTime = null, flickStartX = null, flickStartY = null;
-        let lastMoveTime = 0;
-        let hasMoved = false;
+        let touchStartTime = 0;
+        let touchPhase = "IDLE"; // IDLE | UNDECIDED | HORIZONTAL | VERTICAL
+        let hAnchorX = 0;       // screen X anchor for cell-based horizontal moves
+        let frozenX = 0;        // the piece's X when we freeze horizontal movement
         let isSoftDropping = false;
+        let hasMoved = false;
 
-        const H_THRESHOLD = 12;
-        const V_THRESHOLD = 12;
-        const FLICK_TIME = 160;
-        const FLICK_MIN_VEL = 0.8;
-        const MAX_DRIFT_PX = 15;
-        const VERTICAL_ANGLE_DEG = 45;
+        // Rolling history for velocity (last ~80ms)
+        let touchSamples = [];  // [{x, y, t}, ...]
+        const SAMPLE_WINDOW = 80; // ms
 
-        // Velocity tracking: store last few touch positions
-        let touchHistory = []; // [{x, y, time}, ...]
+        // Tuning constants
+        const CLASSIFY_DIST = 14;     // px before we classify gesture
+        const H_CELL_RATIO = 0.65;    // fraction of cell width per horizontal move
+        const SOFT_DROP_DIST = 1.0;   // cells of downward drag to start soft drop
+        const FLICK_VEL_THRESH = 0.6; // px/ms vertical velocity for hard drop
+        const FLICK_MIN_DIST = 30;    // min px of total downward travel for flick
+        const TAP_MAX_DIST = 14;      // max px drift for a tap
+        const TAP_MAX_TIME = 250;     // max ms for a tap
+        const H_TO_V_VEL = 0.5;      // px/ms vertical velocity to transition H→V
 
         function isUIElement(e) {
           return (
@@ -1827,14 +1839,31 @@
           return null;
         }
 
-        function classifyDirection(dx, dy) {
-          const angle = Math.abs(Math.atan2(dy, dx) * 180 / Math.PI);
-          if (angle > 90 - VERTICAL_ANGLE_DEG && angle < 90 + VERTICAL_ANGLE_DEG) {
-            return "vertical";
-          } else if (angle < VERTICAL_ANGLE_DEG || angle > 180 - VERTICAL_ANGLE_DEG) {
-            return "horizontal";
+        function addSample(x, y) {
+          const t = performance.now();
+          touchSamples.push({ x, y, t });
+          // Trim old samples
+          const cutoff = t - SAMPLE_WINDOW;
+          while (touchSamples.length > 1 && touchSamples[0].t < cutoff) {
+            touchSamples.shift();
           }
-          return Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
+        }
+
+        function getVelocity() {
+          if (touchSamples.length < 2) return { vx: 0, vy: 0 };
+          const first = touchSamples[0];
+          const last = touchSamples[touchSamples.length - 1];
+          const dt = last.t - first.t;
+          if (dt < 5) return { vx: 0, vy: 0 };
+          return {
+            vx: (last.x - first.x) / dt,
+            vy: (last.y - first.y) / dt,
+          };
+        }
+
+        function enterVerticalPhase() {
+          touchPhase = "VERTICAL";
+          frozenX = currentX; // snapshot — this X is locked
         }
 
         document.addEventListener(
@@ -1845,17 +1874,15 @@
 
             const t = e.changedTouches[0];
             touchId = t.identifier;
-            touchStartX = lastX = t.screenX;
-            touchStartY = lastY = t.screenY;
-            gestureDir = "none";
-            stableX = currentX;
-            flickStartTime = null;
-            flickStartX = flickStartY = null;
-            lastMoveTime = performance.now();
-            touchStartTime = Date.now();
-            hasMoved = false;
+            touchStartX = t.screenX;
+            touchStartY = t.screenY;
+            touchStartTime = performance.now();
+            touchPhase = "UNDECIDED";
+            hAnchorX = t.screenX;
+            frozenX = currentX;
             isSoftDropping = false;
-            touchHistory = [{ x: t.screenX, y: t.screenY, time: Date.now() }];
+            hasMoved = false;
+            touchSamples = [{ x: t.screenX, y: t.screenY, t: performance.now() }];
           },
           { passive: false },
         );
@@ -1863,97 +1890,93 @@
         document.addEventListener(
           "touchmove",
           (e) => {
-            if (isUIElement(e) || !started || paused || gameOver) return;
+            if (!started || paused || gameOver || animatingLines) return;
+            if (isUIElement(e)) return;
             e.preventDefault();
 
             const t = getTrackedTouch(e);
             if (!t) return;
 
-            const now = performance.now();
             const x = t.screenX;
             const y = t.screenY;
-            const cellPx = getCellPx();
-
-            touchHistory.push({ x: x, y: y, time: Date.now() });
-            while (touchHistory.length > 1 && Date.now() - touchHistory[0].time > 100) {
-              touchHistory.shift();
-            }
+            addSample(x, y);
 
             const totalDX = x - touchStartX;
             const totalDY = y - touchStartY;
+            const cellPx = getCellPx();
 
-            const shape = getShape(currentType, currentRotation);
-            const pieceOnGround = collides(shape, currentX, currentY + 1);
+            // ── UNDECIDED: wait for enough movement to classify ──
+            if (touchPhase === "UNDECIDED") {
+              const dist = Math.sqrt(totalDX * totalDX + totalDY * totalDY);
+              if (dist < CLASSIFY_DIST) return;
 
-            if (gestureDir === "none") {
-              if (Math.abs(totalDX) >= H_THRESHOLD || Math.abs(totalDY) >= V_THRESHOLD) {
-                gestureDir = classifyDirection(totalDX, totalDY);
+              // Classify: use angle. Vertical gets a generous cone (60°)
+              // to prevent fast downward swipes from being classified as horizontal
+              const absAngle = Math.abs(Math.atan2(totalDY, totalDX) * 180 / Math.PI);
+              // absAngle near 90 = vertical, near 0/180 = horizontal
+              const isVertical = absAngle > 30 && absAngle < 150;
+
+              if (isVertical) {
+                enterVerticalPhase();
                 hasMoved = true;
-                
-                if (gestureDir === "vertical") {
-                  stableX = currentX;
-                  flickStartTime = now;
-                  flickStartX = x;
-                  flickStartY = y;
-                } else {
-                  stableX = currentX;
-                }
               } else {
-                return;
+                touchPhase = "HORIZONTAL";
+                hAnchorX = touchStartX;
+                hasMoved = true;
               }
             }
 
-            // Always allow horizontal movement if piece is on ground
-            if (gestureDir === "horizontal" || pieceOnGround) {
-              const hThresh = cellPx * 0.7;
-              while (x - lastX >= hThresh) {
+            // ── HORIZONTAL phase: cell-by-cell sliding ──
+            if (touchPhase === "HORIZONTAL") {
+              const hThresh = cellPx * H_CELL_RATIO;
+              while (x - hAnchorX >= hThresh) {
                 if (moveRight()) {
-                  lastX += hThresh;
-                  hasMoved = true;
-                  if (gestureDir !== "vertical") stableX = currentX;
+                  hAnchorX += hThresh;
+                  frozenX = currentX; // update frozen in case we transition to V
                 } else {
-                  lastX = x;
+                  hAnchorX = x;
                   break;
                 }
               }
-              while (lastX - x >= hThresh) {
+              while (hAnchorX - x >= hThresh) {
                 if (moveLeft()) {
-                  lastX -= hThresh;
-                  hasMoved = true;
-                  if (gestureDir !== "vertical") stableX = currentX;
+                  hAnchorX -= hThresh;
+                  frozenX = currentX;
                 } else {
-                  lastX = x;
+                  hAnchorX = x;
                   break;
                 }
+              }
+
+              // Check for H→V transition: if vertical velocity is now high,
+              // the user is transitioning from a slide into a drop (L-shape).
+              const vel = getVelocity();
+              if (vel.vy > H_TO_V_VEL && Math.abs(vel.vy) > Math.abs(vel.vx) * 1.5) {
+                enterVerticalPhase();
               }
             }
 
-            if (gestureDir === "vertical" && !pieceOnGround) {
-              const downDist = y - (flickStartY !== null ? flickStartY : touchStartY);
-              if (downDist > cellPx) {
+            // ── VERTICAL phase: soft drop, NO horizontal movement ──
+            if (touchPhase === "VERTICAL") {
+              // Ensure piece stays at frozenX (undo any drift from gravity/other)
+              const shape = getShape(currentType, currentRotation);
+              if (!collides(shape, frozenX, currentY)) {
+                currentX = frozenX;
+              }
+
+              // Soft drop activation
+              const downDist = y - touchStartY;
+              if (downDist > cellPx * SOFT_DROP_DIST) {
                 if (!isSoftDropping) {
                   isSoftDropping = true;
                   keys["down"] = true;
                 }
-                hasMoved = true;
               } else if (isSoftDropping && downDist < cellPx * 0.3) {
+                // User moved finger back up — cancel soft drop
                 isSoftDropping = false;
                 keys["down"] = false;
               }
-              
-              const flickPhaseDX = x - (flickStartX !== null ? flickStartX : touchStartX);
-              if (Math.abs(flickPhaseDX) > cellPx * 0.7) {
-                 const targetX = stableX + Math.round(flickPhaseDX / cellPx);
-                 if (!collides(shape, targetX, currentY)) {
-                    currentX = targetX;
-                 }
-              }
             }
-
-            // lastX tracking is complex with sliding, but for vertical it's straightforward
-            if (gestureDir === "vertical") lastX = x;
-            lastY = y;
-            lastMoveTime = now;
           },
           { passive: false },
         );
@@ -1963,59 +1986,82 @@
           (e) => {
             const t = getTrackedTouch(e);
             if (!t) return;
+            const endPhase = touchPhase;
             touchId = null;
+            touchPhase = "IDLE";
 
+            // Always clear soft drop
             keys["down"] = false;
             isSoftDropping = false;
 
-            if (isUIElement(e) || !started || paused || gameOver) return;
+            if (isUIElement(e) || !started || paused || gameOver || animatingLines) return;
 
-            const now = performance.now();
             const x = t.screenX;
             const y = t.screenY;
+            addSample(x, y);
             const totalDX = x - touchStartX;
             const totalDY = y - touchStartY;
-            const duration = Date.now() - touchStartTime;
+            const duration = performance.now() - touchStartTime;
 
-            let velocityY = 0;
-            if (touchHistory.length >= 2) {
-              const oldest = touchHistory[0];
-              const dt = Date.now() - oldest.time;
-              if (dt > 0) velocityY = (y - oldest.y) / dt;
-            }
-
-            if (!hasMoved && duration < 250 && Math.abs(totalDX) < 12 && Math.abs(totalDY) < 12) {
+            // ── TAP detection ──
+            if (
+              !hasMoved &&
+              duration < TAP_MAX_TIME &&
+              Math.abs(totalDX) < TAP_MAX_DIST &&
+              Math.abs(totalDY) < TAP_MAX_DIST
+            ) {
               rotate(1);
               return;
             }
 
-            const speed = Math.abs(velocityY);
-            
+            // Also detect taps that had minimal classified movement
             if (
-              speed > FLICK_MIN_VEL &&
-              Math.abs(totalDY) > 25 &&
-              Math.abs(totalDY) > Math.abs(totalDX) * 0.8
+              endPhase === "UNDECIDED" &&
+              duration < TAP_MAX_TIME
             ) {
-              if (totalDY < 0) {
-                holdPiece();
-              } else {
-                const mostlyVertical = classifyDirection(totalDX, totalDY) === "vertical";
-                if (mostlyVertical) {
-                  const driftDuringFlick = x - (flickStartX !== null ? flickStartX : touchStartX);
-                  let targetX = stableX;
-                  
-                  if (Math.abs(driftDuringFlick) > MAX_DRIFT_PX) {
-                     const cellPx = getCellPx();
-                     targetX = stableX + Math.round(driftDuringFlick / cellPx);
-                  }
-                  
-                  const shape = getShape(currentType, currentRotation);
-                  if (!collides(shape, targetX, currentY)) {
-                    currentX = targetX;
-                  }
+              rotate(1);
+              return;
+            }
+
+            // ── Flick detection (hard drop or hold) ──
+            const vel = getVelocity();
+            const absVelY = Math.abs(vel.vy);
+
+            // Upward flick = hold piece
+            if (
+              vel.vy < -FLICK_VEL_THRESH &&
+              totalDY < -FLICK_MIN_DIST &&
+              absVelY > Math.abs(vel.vx) * 0.8
+            ) {
+              holdPiece();
+              return;
+            }
+
+            // Downward flick = hard drop
+            if (
+              vel.vy > FLICK_VEL_THRESH &&
+              totalDY > FLICK_MIN_DIST &&
+              absVelY > Math.abs(vel.vx) * 0.6
+            ) {
+              // If we were in VERTICAL or transitioning, keep frozenX
+              if (endPhase === "VERTICAL") {
+                const shape = getShape(currentType, currentRotation);
+                if (!collides(shape, frozenX, currentY)) {
+                  currentX = frozenX;
                 }
-                hardDrop();
               }
+              // If we were in HORIZONTAL and flicking down (L-shape),
+              // the H→V transition in touchmove should have already frozen X.
+              // But if the flick was so fast that touchmove didn't catch it,
+              // use the last frozenX (which was updated during horizontal moves).
+              if (endPhase === "HORIZONTAL") {
+                const shape = getShape(currentType, currentRotation);
+                if (!collides(shape, frozenX, currentY)) {
+                  currentX = frozenX;
+                }
+              }
+              hardDrop();
+              return;
             }
           },
           { passive: false },
