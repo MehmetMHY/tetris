@@ -685,7 +685,14 @@
               e.preventDefault();
             } else if (now - lastTouchStart <= 300) {
               // Block double-tap to zoom at the start of the gesture
-              e.preventDefault();
+              // but NOT on interactive UI elements (buttons, level arrows, etc.)
+              if (
+                !e.target.closest(
+                  "button, .overlay, .panel-box, .menu-btn, .level-selector",
+                )
+              ) {
+                e.preventDefault();
+              }
             }
             lastTouchStart = now;
           },
