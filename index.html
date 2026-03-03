@@ -1831,7 +1831,6 @@
         let vAnchorY = 0; // client Y anchor for soft drop distance (set on VERTICAL entry)
         let isSoftDropping = false;
         let hasMoved = false;
-        let lastHardDropTime = 0; // cooldown to prevent double hard-drops
 
         // Rolling history for velocity (last ~120ms)
         let touchSamples = []; // [{x, y, t}, ...]
@@ -1846,8 +1845,6 @@
         const TAP_MAX_DIST = 14; // max px drift for a tap
         const TAP_MAX_TIME = 250; // max ms for a tap
         const H_TO_V_VEL = 0.8; // px/ms vertical velocity to transition H→V (raised from 0.5)
-        const HARD_DROP_COOLDOWN_MAX = 200; // ms cooldown at level 1
-        const HARD_DROP_COOLDOWN_MIN = 100; // ms cooldown at high levels
 
         function isUIElement(e) {
           return (
@@ -1901,12 +1898,6 @@
           (e) => {
             if (isUIElement(e) || !started || paused || gameOver) return;
             if (touchId !== null) return;
-            // Ignore touches during hard drop cooldown to prevent double drops
-            const cooldown = Math.max(
-              HARD_DROP_COOLDOWN_MIN,
-              HARD_DROP_COOLDOWN_MAX - (level - 1) * 8,
-            );
-            if (performance.now() - lastHardDropTime < cooldown) return;
 
             const t = e.changedTouches[0];
             touchId = t.identifier;
@@ -2131,7 +2122,6 @@
               totalDY > FLICK_MIN_DIST &&
               absVelY > Math.abs(vel.vx) * 1.5
             ) {
-              lastHardDropTime = performance.now();
               hardDrop();
               return;
             }
