@@ -1329,11 +1329,14 @@
         }
 
         function collides(shape, bx, by) {
-          for (let r = 0; r < shape.length; r++) {
-            for (let c = 0; c < shape[r].length; c++) {
-              if (shape[r][c] !== 0) {
+          const rows = shape.length;
+          for (let r = 0; r < rows; r++) {
+            const row = shape[r];
+            const ny = by + r;
+            const cols = row.length;
+            for (let c = 0; c < cols; c++) {
+              if (row[c] !== 0) {
                 const nx = bx + c;
-                const ny = by + r;
                 if (nx < 0 || nx >= COLS || ny >= ROWS) return true;
                 if (ny >= 0 && board[ny][nx] !== EMPTY) return true;
               }
@@ -1361,10 +1364,17 @@
           clearLines();
         }
 
+        function isRowFull(row) {
+          for (let c = 0; c < COLS; c++) {
+            if (row[c] === EMPTY) return false;
+          }
+          return true;
+        }
+
         function clearLines() {
           const full = [];
           for (let r = 0; r < ROWS; r++) {
-            if (board[r].every((c) => c !== EMPTY)) full.push(r);
+            if (isRowFull(board[r])) full.push(r);
           }
           if (full.length === 0) {
             holdUsed = false;
@@ -1432,10 +1442,25 @@
           applyMute();
         }
 
+        // Ghost Y cache — invalidated when piece moves/rotates
+        let cachedGhostY = 0;
+        let ghostCacheKey = ""; // "type,rot,x,y"
+
         function ghostY() {
+          const key =
+            currentType +
+            "," +
+            currentRotation +
+            "," +
+            currentX +
+            "," +
+            currentY;
+          if (key === ghostCacheKey) return cachedGhostY;
           const shape = getShape(currentType, currentRotation);
           let gy = currentY;
           while (!collides(shape, currentX, gy + 1)) gy++;
+          cachedGhostY = gy;
+          ghostCacheKey = key;
           return gy;
         }
 
@@ -1566,12 +1591,15 @@
           // Ghost + current piece (single pass)
           const gy = ghostY();
           const shape = getShape(currentType, currentRotation);
+          const drawGhost = gy !== currentY; // skip ghost if piece is already at ghost position
           for (let r = 0; r < shape.length; r++) {
             const row = shape[r];
             for (let c = 0; c < row.length; c++) {
               if (row[c] !== 0) {
-                const gpy = gy + r;
-                if (gpy >= 0) drawBlock(ctx, currentX + c, gpy, row[c], true);
+                if (drawGhost) {
+                  const gpy = gy + r;
+                  if (gpy >= 0) drawBlock(ctx, currentX + c, gpy, row[c], true);
+                }
                 const py = currentY + r;
                 if (py >= 0) drawBlock(ctx, currentX + c, py, row[c]);
               }
@@ -1614,15 +1642,34 @@
         let isShowingBest = false;
         let scoreTimeout = null;
 
+        // Track previous DOM values to skip redundant writes
+        let prevScoreText = "0";
+        let prevLevelText = "1";
+        let prevSpeedText = "";
+        let prevLinesText = "0";
+
         function updateUI() {
-          if (isShowingBest) {
-            scoreEl.textContent = highScore;
-          } else {
-            scoreEl.textContent = score;
+          const displayScore = isShowingBest ? highScore : score;
+          const sText = "" + displayScore;
+          if (sText !== prevScoreText) {
+            scoreEl.textContent = sText;
+            prevScoreText = sText;
           }
-          levelEl.textContent = level;
-          speedEl.textContent = getSpeed(level);
-          linesEl.textContent = lines;
+          const lText = "" + level;
+          if (lText !== prevLevelText) {
+            levelEl.textContent = lText;
+            prevLevelText = lText;
+          }
+          const spText = "" + getSpeed(level);
+          if (spText !== prevSpeedText) {
+            speedEl.textContent = spText;
+            prevSpeedText = spText;
+          }
+          const liText = "" + lines;
+          if (liText !== prevLinesText) {
+            linesEl.textContent = liText;
+            prevLinesText = liText;
+          }
           if (score > highScore) {
             highScore = score;
             highScoreEl.textContent = highScore;
@@ -1832,9 +1879,12 @@
         let isSoftDropping = false;
         let hasMoved = false;
 
-        // Rolling history for velocity (last ~120ms)
-        let touchSamples = []; // [{x, y, t}, ...]
+        // Rolling history for velocity (last ~120ms) — ring buffer to avoid allocations
         const SAMPLE_WINDOW = 120; // ms
+        const MAX_SAMPLES = 32;
+        const touchSampleBuf = new Float64Array(MAX_SAMPLES * 3); // [x,y,t, x,y,t, ...]
+        let sampleHead = 0;
+        let sampleCount = 0;
 
         // Tuning constants
         const CLASSIFY_DIST = 8; // px before we classify gesture
@@ -1865,24 +1915,48 @@
 
         function addSample(x, y) {
           const t = performance.now();
-          touchSamples.push({ x, y, t });
+          const idx = (sampleHead % MAX_SAMPLES) * 3;
+          touchSampleBuf[idx] = x;
+          touchSampleBuf[idx + 1] = y;
+          touchSampleBuf[idx + 2] = t;
+          sampleHead++;
+          if (sampleCount < MAX_SAMPLES) sampleCount++;
           // Trim old samples
           const cutoff = t - SAMPLE_WINDOW;
-          while (touchSamples.length > 1 && touchSamples[0].t < cutoff) {
-            touchSamples.shift();
+          while (sampleCount > 1) {
+            const oldest =
+              ((sampleHead - sampleCount + MAX_SAMPLES) % MAX_SAMPLES) * 3;
+            if (touchSampleBuf[oldest + 2] < cutoff) {
+              sampleCount--;
+            } else {
+              break;
+            }
           }
         }
 
+        // Reusable velocity result object to avoid per-call allocation
+        const velResult = { vx: 0, vy: 0 };
+
         function getVelocity() {
-          if (touchSamples.length < 2) return { vx: 0, vy: 0 };
-          const first = touchSamples[0];
-          const last = touchSamples[touchSamples.length - 1];
-          const dt = last.t - first.t;
-          if (dt < 5) return { vx: 0, vy: 0 };
-          return {
-            vx: (last.x - first.x) / dt,
-            vy: (last.y - first.y) / dt,
-          };
+          if (sampleCount < 2) {
+            velResult.vx = 0;
+            velResult.vy = 0;
+            return velResult;
+          }
+          const firstIdx =
+            ((sampleHead - sampleCount + MAX_SAMPLES) % MAX_SAMPLES) * 3;
+          const lastIdx = ((sampleHead - 1 + MAX_SAMPLES) % MAX_SAMPLES) * 3;
+          const dt = touchSampleBuf[lastIdx + 2] - touchSampleBuf[firstIdx + 2];
+          if (dt < 5) {
+            velResult.vx = 0;
+            velResult.vy = 0;
+            return velResult;
+          }
+          velResult.vx =
+            (touchSampleBuf[lastIdx] - touchSampleBuf[firstIdx]) / dt;
+          velResult.vy =
+            (touchSampleBuf[lastIdx + 1] - touchSampleBuf[firstIdx + 1]) / dt;
+          return velResult;
         }
 
         function enterVerticalPhase(clientY) {
@@ -1909,9 +1983,9 @@
             vAnchorY = t.clientY;
             isSoftDropping = false;
             hasMoved = false;
-            touchSamples = [
-              { x: t.clientX, y: t.clientY, t: performance.now() },
-            ];
+            sampleHead = 0;
+            sampleCount = 0;
+            addSample(t.clientX, t.clientY);
           },
           { passive: false },
         );
@@ -2212,6 +2286,12 @@
           .addEventListener("click", quitToTitle);
 
         // ─── Game loop ───
+        // Track previous piece state to detect if redraw is needed
+        let prevPieceX = -1,
+          prevPieceY = -1,
+          prevPieceRot = -1,
+          prevPieceType = "";
+
         function gameLoop(time) {
           rafId = requestAnimationFrame(gameLoop);
 
@@ -2274,7 +2354,20 @@
           }
 
           updateUI();
-          drawBoard();
+
+          // Only redraw when board or piece state changed
+          const pieceChanged =
+            currentX !== prevPieceX ||
+            currentY !== prevPieceY ||
+            currentRotation !== prevPieceRot ||
+            currentType !== prevPieceType;
+          if (boardDirty || pieceChanged) {
+            prevPieceX = currentX;
+            prevPieceY = currentY;
+            prevPieceRot = currentRotation;
+            prevPieceType = currentType;
+            drawBoard();
+          }
         }
 
         // ─── Init ───
