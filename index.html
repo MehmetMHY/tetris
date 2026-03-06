@@ -662,6 +662,11 @@
     </div>
 
     <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      }
+    </script>
+    <script>
       // ─── iOS Safe Area + Zoom Fix ───
       (() => {
         // Prevent double-tap zoom and multi-touch pinch on iOS Safari

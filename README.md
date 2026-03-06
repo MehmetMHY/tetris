@@ -31,6 +31,8 @@ The problem was that there was no version that fit how I wanted to play. Mobile 
 - Line clear flash animation
 - Background music with mute toggle (state persisted)
 - iOS safe area support (Dynamic Island, notch, home indicator)
+- Offline support via Service Worker (works without internet after first visit)
+- Installable as a PWA (add to home screen on iOS/Android for app-like experience)
 
 ## Controls
 
@@ -83,6 +85,7 @@ _The script starts a local Python HTTP server and opens the game in your browser
 - Velocity-based touch gesture detection for reliable flick vs drag distinction
 - Level-based timing system for gravity speed and lock delay
 - High scores and mute state persisted with `localStorage`
+- To push updates to offline/PWA users, bump `CACHE_NAME` in `sw.js` (e.g. `"tetris-v1"` → `"tetris-v2"`)
 - Assets (icons, audio) live in the `assets/` directory
 - Background music source [NmCCQxVBfyM](https://www.youtube.com/watch?v=NmCCQxVBfyM)
 
