@@ -153,6 +153,7 @@
           box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
           background: #000; /* Pitch black behind the game board */
           overflow: hidden;
+          contain: layout paint;
         }
 
         #board {
@@ -160,6 +161,9 @@
           height: 100%;
           object-fit: contain;
           touch-action: none;
+          image-rendering: crisp-edges;
+          image-rendering: pixelated;
+          will-change: contents;
         }
 
         /* Hide desktop-only items and Level */
@@ -297,6 +301,8 @@
 
       #board {
         display: block;
+        image-rendering: crisp-edges;
+        image-rendering: pixelated;
       }
 
       .controls-info {
@@ -1306,6 +1312,7 @@
         let dropTimer, lastTime;
         let lockDelay, lockTimer, lockMoves;
         let animatingLines;
+        let flashCounter = 0;
         let rafId;
 
         // ─── Helpers ───
@@ -1387,30 +1394,34 @@
             return;
           }
 
-          animatingLines = new Set(full);
-
-          // Flash then remove, spawn AFTER clearing is done
+          // Brief visual flash (non-blocking — game continues immediately)
+          const flashRows = full.map((r) => r * BLOCK);
+          const myFlash = ++flashCounter;
+          animatingLines = flashRows;
           setTimeout(() => {
-            // Remove lines first (must be descending to keep indices valid)
-            full.sort((a, b) => b - a);
-            for (const r of full) {
-              board.splice(r, 1);
+            if (flashCounter === myFlash) {
+              animatingLines = null;
+              boardDirty = true;
             }
-            // Add new lines at the top
-            for (let i = 0; i < full.length; i++) {
-              board.unshift(new Array(COLS).fill(EMPTY));
-            }
-            boardDirty = true;
+          }, 80);
 
-            const count = full.length;
-            lines += count;
-            score += LINE_SCORES[count] * level;
-            level = Math.floor(lines / 10) + 1;
-            updateUI();
-            animatingLines = null;
-            holdUsed = false;
-            spawn();
-          }, 200);
+          // Process board immediately — no input blocking
+          full.sort((a, b) => b - a);
+          for (const r of full) {
+            board.splice(r, 1);
+          }
+          for (let i = 0; i < full.length; i++) {
+            board.unshift(new Array(COLS).fill(EMPTY));
+          }
+          boardDirty = true;
+
+          const count = full.length;
+          lines += count;
+          score += LINE_SCORES[count] * level;
+          level = Math.floor(lines / 10) + 1;
+          updateUI();
+          holdUsed = false;
+          spawn();
         }
 
         function spawn() {
@@ -1583,11 +1594,11 @@
           if (boardDirty) rebuildBoardCache();
           ctx.drawImage(boardCacheCanvas, 0, 0);
 
-          // Line clear flash overlay
+          // Line clear flash overlay (pixel positions)
           if (animatingLines) {
             ctx.fillStyle = "#fff";
-            for (const r of animatingLines) {
-              ctx.fillRect(0, r * BLOCK, COLS * BLOCK, BLOCK);
+            for (const py of animatingLines) {
+              ctx.fillRect(0, py, COLS * BLOCK, BLOCK);
             }
           }
 
@@ -1719,7 +1730,7 @@
           dasActive[key] = true;
           dasTimer[key] = setTimeout(() => {
             dasTimer[key] = setInterval(() => {
-              if (!paused && !gameOver && started && !animatingLines) action();
+              if (!paused && !gameOver && started) action();
             }, DAS_REPEAT);
           }, DAS_DELAY);
         }
@@ -1785,8 +1796,6 @@
             }
             return;
           }
-
-          if (animatingLines) return;
 
           switch (e.code) {
             case "ArrowLeft":
@@ -1883,6 +1892,7 @@
         let vAnchorY = 0; // client Y anchor for soft drop distance (set on VERTICAL entry)
         let isSoftDropping = false;
         let hasMoved = false;
+        let touchMoveProcessed = false;
 
         // Rolling history for velocity (last ~120ms) — ring buffer to avoid allocations
         const SAMPLE_WINDOW = 120; // ms
@@ -2009,17 +2019,6 @@
             const y = t.clientY;
             addSample(x, y);
 
-            // During line-clear animation, keep tracking finger position
-            // but don't apply any moves. Reset anchors so that when the
-            // animation ends the gesture resumes from the current finger pos.
-            if (animatingLines) {
-              hAnchorX = x;
-              touchStartX = x;
-              touchStartY = y;
-              vAnchorY = y;
-              return;
-            }
-
             const totalDX = x - touchStartX;
             const totalDY = y - touchStartY;
             const cellPx = cachedCellPx;
@@ -2046,6 +2045,10 @@
                 hasMoved = true;
               }
             }
+
+            // Throttle move processing to once per frame (syncs to display refresh rate)
+            if (touchMoveProcessed) return;
+            touchMoveProcessed = true;
 
             // ── HORIZONTAL phase: cell-by-cell sliding ──
             if (touchPhase === "HORIZONTAL") {
@@ -2143,14 +2146,7 @@
             keys["down"] = false;
             isSoftDropping = false;
 
-            if (
-              isUIElement(e) ||
-              !started ||
-              paused ||
-              gameOver ||
-              animatingLines
-            )
-              return;
+            if (isUIElement(e) || !started || paused || gameOver) return;
 
             const x = t.clientX;
             const y = t.clientY;
@@ -2299,15 +2295,10 @@
 
         function gameLoop(time) {
           rafId = requestAnimationFrame(gameLoop);
+          touchMoveProcessed = false;
 
           if (paused || gameOver) {
             lastTime = time;
-            return;
-          }
-
-          if (animatingLines) {
-            lastTime = time;
-            drawBoard();
             return;
           }
 
