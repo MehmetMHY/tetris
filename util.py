@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-import argparse
 import http.server
+import subprocess
+import webbrowser
+import argparse
+import tempfile
+import socket
+import sys
 import os
 import re
-import socket
-import subprocess
-import sys
-import tempfile
-import webbrowser
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
