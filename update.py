@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
 
-import re
 import subprocess
-import os
 import tempfile
-from pathlib import Path
+import os
+import re
 
-sw_path = Path("sw.js")
-content = sw_path.read_text(encoding="utf-8")
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+
+sw_path = os.path.join(script_dir, "sw.js")
+if not os.path.isfile(sw_path):
+    raise SystemExit("sw.js not found in " + script_dir)
+
+with open(sw_path, "r", encoding="utf-8") as f:
+    content = f.read()
+
 m = re.search(r'const CACHE_NAME = "tetris-v(\d+)";', content)
 if not m:
     raise SystemExit("cache_name line not found or not in expected format")
+
 v = int(m.group(1)) + 1
 new_content = re.sub(
     r'const CACHE_NAME = "tetris-v\d+";',
@@ -18,10 +26,19 @@ new_content = re.sub(
     content,
     count=1,
 )
-sw_path.write_text(new_content, encoding="utf-8")
+with open(sw_path, "w", encoding="utf-8") as f:
+    f.write(new_content)
 print(f"bumped cache_name to tetris-v{v}")
 
 subprocess.run(["git", "status"], check=True)
+
+confirm_add = input("\ngit add --all? [y/n]: ").strip().lower()
+if confirm_add != "y":
+    with open(sw_path, "w", encoding="utf-8") as f:
+        f.write(content)
+    print("aborted, reverted sw.js")
+    raise SystemExit(1)
+
 subprocess.run(["git", "add", "--all"], check=True)
 
 editor = os.environ.get("EDITOR", "vi")
@@ -36,14 +53,17 @@ with open(tf_path, "r", encoding="utf-8") as f:
 os.unlink(tf_path)
 
 if not msg:
-    sw_path.write_text(content, encoding="utf-8")
-    print("empty commit message, reverted sw.js")
+    with open(sw_path, "w", encoding="utf-8") as f:
+        f.write(content)
+    subprocess.run(["git", "reset"], check=True)
+    print("empty commit message, reverted sw.js and unstaged changes")
     raise SystemExit(1)
 
 print(f"\ncommit message:\n{msg}\n")
-confirm = input("commit and push? [y/n]: ").strip().lower()
-if confirm != "y":
-    sw_path.write_text(content, encoding="utf-8")
+confirm_push = input("commit and push? [y/n]: ").strip().lower()
+if confirm_push != "y":
+    with open(sw_path, "w", encoding="utf-8") as f:
+        f.write(content)
     subprocess.run(["git", "reset"], check=True)
     print("aborted, reverted sw.js and unstaged changes")
     raise SystemExit(1)

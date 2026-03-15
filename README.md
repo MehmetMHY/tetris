@@ -85,7 +85,7 @@ _The script starts a local Python HTTP server and opens the game in your browser
 - Velocity-based touch gesture detection for reliable flick vs drag distinction
 - Level-based timing system for gravity speed and lock delay
 - High scores and mute state persisted with `localStorage`
-- To push updates to offline/PWA users, bump `CACHE_NAME` in `sw.js` (e.g. `"tetris-v1"` → `"tetris-v2"`)
+- To push updates to offline/PWA users, bump `CACHE_NAME` in `sw.js` (e.g. `"tetris-v1"` → `"tetris-v2"`), or run `python3 update.py` which bumps the cache version, stages changes, and commits/pushes in one step
 - Assets (icons, audio) live in the `assets/` directory
 - Background music source [NmCCQxVBfyM](https://www.youtube.com/watch?v=NmCCQxVBfyM)
 
