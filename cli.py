@@ -107,7 +107,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Tetris project utility",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="examples:\n  python3 util.py -r\n  python3 util.py -d",
+        epilog="examples:\n  python3 cli.py -r\n  python3 cli.py -d",
     )
     parser.add_argument(
         "-r",
