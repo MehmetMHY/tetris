@@ -1427,17 +1427,6 @@
             return;
           }
 
-          // Brief visual flash (non-blocking — game continues immediately)
-          const flashRows = full.map((r) => r * BLOCK);
-          const myFlash = ++flashCounter;
-          animatingLines = flashRows;
-          setTimeout(() => {
-            if (flashCounter === myFlash) {
-              animatingLines = null;
-              boardDirty = true;
-            }
-          }, 80);
-
           // Process board immediately — no input blocking
           full.sort((a, b) => b - a);
           for (const r of full) {
@@ -1941,7 +1930,7 @@
         let sampleCount = 0;
 
         // Tuning constants
-        const CLASSIFY_DIST = 8; // px before we classify gesture
+        const CLASSIFY_DIST = 5; // px before we classify gesture
         const H_CELL_RATIO = 0.65; // fraction of cell width per horizontal move
         const SOFT_DROP_DIST = 1.0; // cells of downward drag to start soft drop
         const FLICK_VEL_THRESH = 1.2; // px/ms vertical velocity for hard drop
@@ -2084,10 +2073,6 @@
                 hasMoved = true;
               }
             }
-
-            // Throttle move processing to once per frame (syncs to display refresh rate)
-            if (touchMoveProcessed) return;
-            touchMoveProcessed = true;
 
             // ── HORIZONTAL phase: cell-by-cell sliding ──
             if (touchPhase === "HORIZONTAL") {
