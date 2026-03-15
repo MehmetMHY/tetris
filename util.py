@@ -63,8 +63,8 @@ def cmd_deploy():
 
     subprocess.run(["git", "status"], check=True)
 
-    confirm_add = input("\ngit add --all? [y/n]: ").strip().lower()
-    if confirm_add != "y":
+    confirm_add = input("\ngit add --all? [Y/n]: ").strip().lower()
+    if confirm_add not in ("y", ""):
         with open(sw_path, "w", encoding="utf-8") as f:
             f.write(content)
         print("aborted, reverted sw.js")
@@ -91,8 +91,8 @@ def cmd_deploy():
         raise SystemExit(1)
 
     print(f"\ncommit message:\n{msg}\n")
-    confirm_push = input("commit and push? [y/n]: ").strip().lower()
-    if confirm_push != "y":
+    confirm_push = input("commit and push? [Y/n]: ").strip().lower()
+    if confirm_push not in ("y", ""):
         with open(sw_path, "w", encoding="utf-8") as f:
             f.write(content)
         subprocess.run(["git", "reset"], check=True)
