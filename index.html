@@ -1931,12 +1931,12 @@
 
         // Tuning constants
         const CLASSIFY_DIST = 5; // px before we classify gesture
-        const H_CELL_RATIO = 0.65; // fraction of cell width per horizontal move
+        const H_CELL_RATIO = 0.85; // fraction of cell width per horizontal move
         const SOFT_DROP_DIST = 1.0; // cells of downward drag to start soft drop
         const FLICK_VEL_THRESH = 1.2; // px/ms vertical velocity for hard drop
         const FLICK_MIN_DIST = 50; // min px of total downward travel for flick
-        const TAP_MAX_DIST = 14; // max px drift for a tap
-        const TAP_MAX_TIME = 250; // max ms for a tap
+        const TAP_MAX_DIST = 10; // max px drift for a tap
+        const TAP_MAX_TIME = 180; // max ms for a tap
         const H_TO_V_VEL = 0.8; // px/ms vertical velocity to transition H→V (raised from 0.5)
 
         function isUIElement(e) {
@@ -2192,8 +2192,14 @@
               return;
             }
 
-            // Also detect taps that had minimal classified movement
-            if (endPhase === "UNDECIDED" && duration < TAP_MAX_TIME) {
+            // Also detect taps that had minimal classified movement.
+            // If still UNDECIDED (finger barely moved), treat as a tap
+            // regardless of duration — a stationary finger is a tap, not a drag.
+            if (
+              endPhase === "UNDECIDED" &&
+              Math.abs(totalDX) < CLASSIFY_DIST &&
+              Math.abs(totalDY) < CLASSIFY_DIST
+            ) {
               rotate(1);
               return;
             }
