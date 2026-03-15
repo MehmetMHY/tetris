@@ -896,7 +896,9 @@
           g.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
           // Use slightly brighter grid lines so they're visible on mobile
           const isMobile = window.innerWidth <= 768;
-          g.strokeStyle = isMobile ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)";
+          g.strokeStyle = isMobile
+            ? "rgba(255,255,255,0.08)"
+            : "rgba(255,255,255,0.03)";
           g.lineWidth = 1;
           for (let r = 0; r <= ROWS; r++) {
             g.beginPath();
@@ -932,8 +934,14 @@
           // Redraw only the dirty row range from the background
           boardCacheCtx.drawImage(
             bgCanvas,
-            0, yStart, COLS * BLOCK, h,
-            0, yStart, COLS * BLOCK, h,
+            0,
+            yStart,
+            COLS * BLOCK,
+            h,
+            0,
+            yStart,
+            COLS * BLOCK,
+            h,
           );
           for (let r = rs; r < re; r++) {
             for (let c = 0; c < COLS; c++) {
@@ -1378,7 +1386,8 @@
 
         function lockPiece() {
           const shape = getShape(currentType, currentRotation);
-          let minRow = ROWS, maxRow = 0;
+          let minRow = ROWS,
+            maxRow = 0;
           for (let r = 0; r < shape.length; r++) {
             for (let c = 0; c < shape[r].length; c++) {
               if (shape[r][c] !== 0) {
