@@ -148,7 +148,7 @@
           padding: 0;
           margin: 0; /* Removed negative margins to fix grid clipping */
           border: none;
-          border-top: 2px solid #333; /* Visual separator from top HUD */
+          border-top: 2px solid #555; /* Brighter separator from top HUD */
           border-radius: 0; /* Square edges for edge-to-edge */
           box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
           background: #000; /* Pitch black behind the game board */
@@ -894,7 +894,9 @@
           const g = bgCanvas.getContext("2d");
           g.fillStyle = "#111122";
           g.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
-          g.strokeStyle = "rgba(255,255,255,0.03)";
+          // Use slightly brighter grid lines so they're visible on mobile
+          const isMobile = window.innerWidth <= 768;
+          g.strokeStyle = isMobile ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)";
           g.lineWidth = 1;
           for (let r = 0; r <= ROWS; r++) {
             g.beginPath();
@@ -918,9 +920,22 @@
         boardCacheCtx.imageSmoothingEnabled = false;
         let boardDirty = true;
 
+        // Track which rows changed for partial cache rebuilds
+        let dirtyRowStart = 0;
+        let dirtyRowEnd = ROWS;
+
         function rebuildBoardCache() {
-          boardCacheCtx.drawImage(bgCanvas, 0, 0);
-          for (let r = 0; r < ROWS; r++) {
+          const rs = dirtyRowStart;
+          const re = dirtyRowEnd;
+          const yStart = (rs * BLOCK) | 0;
+          const h = ((re - rs) * BLOCK) | 0;
+          // Redraw only the dirty row range from the background
+          boardCacheCtx.drawImage(
+            bgCanvas,
+            0, yStart, COLS * BLOCK, h,
+            0, yStart, COLS * BLOCK, h,
+          );
+          for (let r = rs; r < re; r++) {
             for (let c = 0; c < COLS; c++) {
               if (board[r][c] !== EMPTY) {
                 boardCacheCtx.drawImage(
@@ -932,6 +947,8 @@
             }
           }
           boardDirty = false;
+          dirtyRowStart = 0;
+          dirtyRowEnd = ROWS;
         }
 
         // Tetromino shapes (each rotation state)
@@ -1245,8 +1262,10 @@
         }
 
         function getLockDelay(lvl) {
-          // Gentle lock delay scaling: 500ms at level 1, down to 350ms at level 15+
-          return Math.max(350, 500 - (lvl - 1) * 10);
+          // Lock delay scaling: 500ms at level 1, minimum 450ms on mobile / 350ms on desktop
+          const isMobile = window.innerWidth <= 768;
+          const minDelay = isMobile ? 450 : 350;
+          return Math.max(minDelay, 500 - (lvl - 1) * 10);
         }
 
         // ─── DOM ───
@@ -1359,6 +1378,7 @@
 
         function lockPiece() {
           const shape = getShape(currentType, currentRotation);
+          let minRow = ROWS, maxRow = 0;
           for (let r = 0; r < shape.length; r++) {
             for (let c = 0; c < shape[r].length; c++) {
               if (shape[r][c] !== 0) {
@@ -1369,9 +1389,13 @@
                   return;
                 }
                 board[ny][nx] = shape[r][c];
+                if (ny < minRow) minRow = ny;
+                if (ny > maxRow) maxRow = ny;
               }
             }
           }
+          dirtyRowStart = minRow;
+          dirtyRowEnd = maxRow + 1;
           boardDirty = true;
           clearLines();
         }
@@ -1518,7 +1542,6 @@
             dropped++;
           }
           score += dropped * HARD_DROP_SCORE;
-          updateUI();
           lockPiece();
         }
 
@@ -1647,11 +1670,18 @@
           }
         }
 
+        let prevNextType = null;
+        let prevHoldType = undefined; // distinguish null (empty) from undefined (unset)
+
         function drawNext() {
+          if (nextType === prevNextType) return;
+          prevNextType = nextType;
           drawPreview(nctx, nextCanvas, nextType);
         }
 
         function drawHold() {
+          if (holdType === prevHoldType) return;
+          prevHoldType = holdType;
           drawPreview(hctx, holdCanvas, holdType);
         }
 
