@@ -110,10 +110,16 @@ def main():
         epilog="examples:\n  python3 util.py -r\n  python3 util.py -d",
     )
     parser.add_argument(
-        "-r", "--run", action="store_true", help="start local dev server and open in browser"
+        "-r",
+        "--run",
+        action="store_true",
+        help="start local dev server and open in browser",
     )
     parser.add_argument(
-        "-d", "--deploy", action="store_true", help="bump SW cache version, commit, and push"
+        "-d",
+        "--deploy",
+        action="store_true",
+        help="bump SW cache version, commit, and push",
     )
 
     args = parser.parse_args()

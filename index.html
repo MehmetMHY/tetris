@@ -922,28 +922,9 @@
         boardCacheCtx.imageSmoothingEnabled = false;
         let boardDirty = true;
 
-        // Track which rows changed for partial cache rebuilds
-        let dirtyRowStart = 0;
-        let dirtyRowEnd = ROWS;
-
         function rebuildBoardCache() {
-          const rs = dirtyRowStart;
-          const re = dirtyRowEnd;
-          const yStart = (rs * BLOCK) | 0;
-          const h = ((re - rs) * BLOCK) | 0;
-          // Redraw only the dirty row range from the background
-          boardCacheCtx.drawImage(
-            bgCanvas,
-            0,
-            yStart,
-            COLS * BLOCK,
-            h,
-            0,
-            yStart,
-            COLS * BLOCK,
-            h,
-          );
-          for (let r = rs; r < re; r++) {
+          boardCacheCtx.drawImage(bgCanvas, 0, 0);
+          for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
               if (board[r][c] !== EMPTY) {
                 boardCacheCtx.drawImage(
@@ -955,8 +936,6 @@
             }
           }
           boardDirty = false;
-          dirtyRowStart = 0;
-          dirtyRowEnd = ROWS;
         }
 
         // Tetromino shapes (each rotation state)
@@ -1386,8 +1365,6 @@
 
         function lockPiece() {
           const shape = getShape(currentType, currentRotation);
-          let minRow = ROWS,
-            maxRow = 0;
           for (let r = 0; r < shape.length; r++) {
             for (let c = 0; c < shape[r].length; c++) {
               if (shape[r][c] !== 0) {
@@ -1398,13 +1375,9 @@
                   return;
                 }
                 board[ny][nx] = shape[r][c];
-                if (ny < minRow) minRow = ny;
-                if (ny > maxRow) maxRow = ny;
               }
             }
           }
-          dirtyRowStart = minRow;
-          dirtyRowEnd = maxRow + 1;
           boardDirty = true;
           clearLines();
         }
@@ -1931,7 +1904,7 @@
 
         // Tuning constants
         const CLASSIFY_DIST = 8; // px before we classify gesture
-        const H_CELL_RATIO = 0.65; // fraction of cell width per horizontal move
+        const H_CELL_RATIO = 0.5; // fraction of cell width per horizontal move
         const SOFT_DROP_DIST = 1.0; // cells of downward drag to start soft drop
         const FLICK_VEL_THRESH = 1.2; // px/ms vertical velocity for hard drop
         const FLICK_MIN_DIST = 50; // min px of total downward travel for flick
