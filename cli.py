@@ -10,7 +10,7 @@ import sys
 import os
 import re
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def find_open_port(start=8000, max_attempts=100):
@@ -18,30 +18,30 @@ def find_open_port(start=8000, max_attempts=100):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             if s.connect_ex(("localhost", port)) != 0:
                 return port
-    print("Error: Could not find an available port")
+    print("error: could not find an available port")
     sys.exit(1)
 
 
 def cmd_run():
-    os.chdir(SCRIPT_DIR)
+    os.chdir(ROOT_DIR)
     port = find_open_port()
     url = f"http://localhost:{port}"
-    print(f"Starting HTTP server on {url}")
-    print("Press Ctrl+C to stop the server")
+    print(f"starting http server on {url}")
+    print("press ctrl+c to stop the server")
     webbrowser.open(url)
     handler = http.server.SimpleHTTPRequestHandler
     with http.server.HTTPServer(("", port), handler) as server:
         try:
             server.serve_forever()
         except KeyboardInterrupt:
-            print("\nServer stopped")
+            print("\nserver stopped")
 
 
 def cmd_deploy():
-    os.chdir(SCRIPT_DIR)
-    sw_path = os.path.join(SCRIPT_DIR, "sw.js")
+    os.chdir(ROOT_DIR)
+    sw_path = os.path.join(ROOT_DIR, "sw.js")
     if not os.path.isfile(sw_path):
-        raise SystemExit("sw.js not found in " + SCRIPT_DIR)
+        raise SystemExit("sw.js not found in " + ROOT_DIR)
 
     with open(sw_path, "r", encoding="utf-8") as f:
         content = f.read()
@@ -105,7 +105,7 @@ def cmd_deploy():
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Tetris project utility",
+        description="tetris project utility",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="examples:\n  python3 cli.py -r\n  python3 cli.py -d",
     )
@@ -119,7 +119,7 @@ def main():
         "-d",
         "--deploy",
         action="store_true",
-        help="bump SW cache version, commit, and push",
+        help="bump sw cache version, commit, and push",
     )
 
     args = parser.parse_args()
@@ -129,7 +129,7 @@ def main():
         sys.exit(0)
 
     if args.run and args.deploy:
-        print("Error: use either -r or -d, not both")
+        print("error: use either -r or -d, not both")
         sys.exit(1)
 
     if args.run:
