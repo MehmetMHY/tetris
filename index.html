@@ -897,7 +897,7 @@
           // Use slightly brighter grid lines so they're visible on mobile
           const isMobile = window.innerWidth <= 768;
           g.strokeStyle = isMobile
-            ? "rgba(255,255,255,0.08)"
+            ? "rgba(255,255,255,0.13)"
             : "rgba(255,255,255,0.03)";
           g.lineWidth = 1;
           for (let r = 0; r <= ROWS; r++) {
@@ -2438,6 +2438,13 @@
           cancelAnimationFrame(rafId);
           rafId = requestAnimationFrame(gameLoop);
         }
+
+        // ─── Auto-pause when leaving app (iOS home swipe, tab switch, etc.) ───
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden && started && !gameOver && !paused) {
+            togglePause();
+          }
+        });
 
         // ─── Touch Start/Restart ───
         startOverlay.addEventListener("click", (e) => {
