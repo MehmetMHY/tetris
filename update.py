@@ -26,8 +26,7 @@ subprocess.run(["git", "add", "--all"], check=True)
 
 editor = os.environ.get("EDITOR", "vi")
 fd, tf_path = tempfile.mkstemp(suffix=".txt", prefix="git_commit_msg_")
-with os.fdopen(fd, "w") as f:
-    f.write(f"bump cache_name to tetris-v{v}\n\n")
+os.close(fd)
 
 print("opening editor for commit message...")
 subprocess.run([editor, tf_path], check=True)
@@ -38,7 +37,16 @@ os.unlink(tf_path)
 
 if not msg:
     sw_path.write_text(content, encoding="utf-8")
-    raise SystemExit("empty commit message, reverted sw.js and aborting")
+    print("empty commit message, reverted sw.js")
+    raise SystemExit(1)
+
+print(f"\ncommit message:\n{msg}\n")
+confirm = input("commit and push? [y/n]: ").strip().lower()
+if confirm != "y":
+    sw_path.write_text(content, encoding="utf-8")
+    subprocess.run(["git", "reset"], check=True)
+    print("aborted, reverted sw.js and unstaged changes")
+    raise SystemExit(1)
 
 subprocess.run(["git", "commit", "-F", "-"], input=msg.encode(), check=True)
 subprocess.run(["git", "push"], check=True)
