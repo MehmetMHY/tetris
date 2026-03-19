@@ -1237,10 +1237,7 @@
           65, // Level 10
           50, // Level 11
           40, // Level 12
-          33, // Level 13
-          28, // Level 14
-          23, // Level 15
-          18, // Level 16+  "kill screen"
+          33, // Level 13+  (NES lvl 19-28 feel)
         ];
 
         function getSpeed(lvl) {
@@ -1718,12 +1715,24 @@
           }
         });
 
-        // ─── DAS / Auto-repeat ───
-        const DAS_DELAY = 170;
-        const DAS_REPEAT = 50;
+        // ─── DAS / Auto-repeat (scales with level) ───
+        const DAS_DELAY_BASE = 170;
+        const DAS_DELAY_MIN = 100;
+        const DAS_REPEAT_BASE = 50;
+        const DAS_REPEAT_MIN = 30;
         let keys = {};
         let dasTimer = {};
         let dasActive = {};
+
+        function getDASDelay() {
+          const t = Math.min((level - 1) / 9, 1); // 0 at L1, 1 at L10+
+          return DAS_DELAY_BASE - t * (DAS_DELAY_BASE - DAS_DELAY_MIN);
+        }
+
+        function getDASRepeat() {
+          const t = Math.min((level - 1) / 9, 1);
+          return DAS_REPEAT_BASE - t * (DAS_REPEAT_BASE - DAS_REPEAT_MIN);
+        }
 
         function startDAS(key, action) {
           if (dasActive[key]) return;
@@ -1732,8 +1741,8 @@
           dasTimer[key] = setTimeout(() => {
             dasTimer[key] = setInterval(() => {
               if (!paused && !gameOver && started) action();
-            }, DAS_REPEAT);
-          }, DAS_DELAY);
+            }, getDASRepeat());
+          }, getDASDelay());
         }
 
         function stopDAS(key) {

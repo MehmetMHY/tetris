@@ -11,7 +11,7 @@
 
 [Tetris](https://en.wikipedia.org/wiki/Tetris) is a legendary game and one that I enjoy very much. I really love the game and enjoy playing it; it is a great stress reliever. For a fun weekend project, I decided to build the game as a browser game/app designed for both Desktop and Mobile, using the principles of [vibe coding](https://en.wikipedia.org/wiki/Vibe_coding). The overall feel of this version of Tetris was inspired by [Play Tetris](https://play.tetris.com/).
 
-## Why I Built This
+## Why This?
 
 Tetris has been one of the few things that reliably helps me when I am really stressed, whether from work or life. Instead of stress eating junk food or binge watching YouTube and TV, I can play for about 10 to 30 minutes and feel like my brain has been cleared out a bit. It is not just casual unwinding for me, it is a way to have something simple and focused to pour that stress into. There is even some cool research showing Tetris can affect how the brain handles intrusive memories and stress, for example [in trauma film experiments](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0004153), [in people treated after real accidents](https://doi.org/10.1038/mp.2017.23), and [as a supplement to therapy with measurable brain changes](https://pmc.ncbi.nlm.nih.gov/articles/PMC7828932/). I am not trying to turn this game into a medical treatment, I just like that a thing that already works for me as a healthy outlet also happens to be studied in interesting ways.
 
@@ -82,6 +82,14 @@ python3 cli.py -d
 - [Cha CLI](https://github.com/MehmetMHY/ch)
 - [xAI Grok Web App](https://grok.com/) _(logos/icons)_
 - [Perplexity](https://www.perplexity.ai/) _(research bugs)_
+
+## Speed Tuning & Game Theory
+
+The speed curve and lock delay in this version were tuned using research into how classic and modern Tetris games handle difficulty progression. In the original [NES Tetris](<https://en.wikipedia.org/wiki/Tetris_(NES_video_game)>), gravity reaches one row per frame at level 29, which became the famous ["kill screen"](https://tetris.wiki/Tetris_%28NES%29) where the game becomes effectively unplayable for most humans. That was not really a designed ending, it was more of a side effect of the hardware and how DAS (Delayed Auto Shift) was too slow to keep up with the drop speed. Willis Gibson proved this in 2024 when he [pushed past it and crashed the game at level 157](https://apnews.com/article/tetris-win-kill-screen-blue-scuti-willis-gibson-df9325c62d42292e854cadb54d8f4cb3).
+
+Modern games like [TGM (Tetris: The Grand Master)](https://tetris.wiki/Tetris_The_Grand_Master) solved this differently. Instead of just making pieces fall faster until the game breaks, TGM caps gravity at 20G (instant drop) and then tightens other timing windows like lock delay and DAS to increase difficulty. The [Tetris Guideline](https://tetris.wiki/Tetris_Guideline) standard uses 500ms lock delay with up to 15 move resets, which this version follows. Research into [TGM2 Death mode](https://tetris.wiki/Tetris_The_Absolute_The_Grand_Master_2) and [TGM3 Shirase](https://tetris.wiki/Tetris_The_Grand_Master_3_Terror-Instinct) showed that the practical floor for competitive play is around 250ms of lock delay with fast DAS, while anything below 133ms is specialist territory.
+
+Based on all of this, the speed curve here caps gravity at 33ms per row (similar to [NES levels 19 through 28](https://tetris.wiki/Tetris_%28NES%29)) instead of going to instant drop, and DAS scales from 170ms down to 100ms at higher levels so you can actually traverse the board during lock delay. The goal was to make high levels feel brutally fast but still fair, closer to how [Tetris 99](https://harddrop.com/wiki/Tetris_99) and TGM handle endgame difficulty rather than the original NES approach of just letting raw speed outrun your inputs.
 
 ## Implementation Notes
 
