@@ -1,11 +1,8 @@
-<!-- NOTE: this README was designed for GitHub's markdown renderer -->
-
-<div id="user-content-toc" align="center">
+<div align="center">
   <img src="./assets/logo.png" width="175">
-  <ul>
-    <summary><h1>Tetris</h1></summary>
-  </ul>
 </div>
+
+<h1 align="center">Tetris</h1>
 
 ## About
 
