@@ -222,7 +222,6 @@
           overflow: hidden;
         }
 
-        .box-buttons .mute-btn,
         .box-buttons .settings-btn {
           flex: 1;
           font-size: 9px;
@@ -247,7 +246,6 @@
           border-top: 1px solid #333;
         }
 
-        .box-buttons .mute-btn:active,
         .box-buttons .settings-btn:active {
           background: #2a2a4e;
           color: #fff;
@@ -478,7 +476,6 @@
         gap: 8px;
       }
 
-      .mute-btn,
       .settings-btn {
         flex: 1;
         background: #2a2a4e;
@@ -494,15 +491,13 @@
           border-color 0.15s;
       }
 
-      .mute-btn:hover,
-      .mute-btn:focus,
       .settings-btn:hover,
       .settings-btn:focus {
         background: #3a3a6e;
         outline: none;
       }
 
-      #audio-overlay h2 {
+      #settings-overlay h2 {
         color: #fff;
       }
 
@@ -637,14 +632,12 @@
           <kbd>&uarr;</kbd><kbd>W</kbd> / <kbd>X</kbd> Rotate CW<br />
           <kbd>Z</kbd> Rotate CCW<br />
           <kbd>C</kbd> / <kbd>LShift</kbd> Hold<br />
-          <kbd>M</kbd> Audio settings<br />
-          <kbd>Esc</kbd> / <kbd>P</kbd> Pause
+          <kbd>Esc</kbd> / <kbd>M</kbd> Settings
         </div>
 
         <!-- Buttons -->
         <div class="button-group box-buttons">
-          <button class="settings-btn" id="pause-btn">Pause</button>
-          <button class="mute-btn" id="mute-btn">Audio</button>
+          <button class="settings-btn" id="settings-btn">Settings</button>
         </div>
       </div>
     </div>
@@ -683,36 +676,33 @@
           </div>
         </div>
         <p class="prompt">Press space or tap to start</p>
-        <a href="https://github.com/MehmetMHY/tetris" target="_blank" rel="noopener noreferrer" class="source-link" title="Source Code">
+        <a
+          href="https://github.com/MehmetMHY/tetris"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="source-link"
+          title="Source Code"
+        >
           <img src="assets/github.svg" alt="GitHub" width="34" height="34" />
         </a>
       </div>
     </div>
 
-    <!-- Pause overlay -->
-    <div class="overlay hidden" id="pause-overlay">
+    <!-- Settings overlay -->
+    <div class="overlay hidden" id="settings-overlay">
       <div class="overlay-content">
-        <h2>PAUSED</h2>
+        <h2>SETTINGS</h2>
         <div class="menu-buttons">
           <button class="menu-btn" id="btn-resume">Resume</button>
-          <button class="menu-btn" id="btn-restart">Restart</button>
-          <button class="menu-btn" id="btn-quit">Quit</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Audio settings overlay -->
-    <div class="overlay hidden" id="audio-overlay">
-      <div class="overlay-content">
-        <h2>AUDIO</h2>
-        <div class="menu-buttons">
           <button class="menu-btn audio-toggle" id="btn-mute-music">
             Mute Music
           </button>
           <button class="menu-btn audio-toggle" id="btn-mute-sfx">
             Mute SFX
           </button>
-          <button class="menu-btn" id="btn-audio-back">Back</button>
+          <button class="menu-btn" id="btn-restart">Restart</button>
+          <button class="menu-btn" id="btn-source">Source Code</button>
+          <button class="menu-btn" id="btn-quit">Quit</button>
         </div>
       </div>
     </div>
@@ -841,7 +831,6 @@
         // ─── Audio Setup ───
         const audioEl = document.getElementById("background-audio");
         const lineClearAudio = document.getElementById("line-clear-audio");
-        const muteBtn = document.getElementById("mute-btn");
         let audioStarted = false;
         const AUDIO_VOLUME = 0.12;
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -849,7 +838,10 @@
         let muteMusic = localStorage.getItem("tetris-mute-music") === "true";
         let muteSfx = localStorage.getItem("tetris-mute-sfx") === "true";
         // Migrate from old mute keys
-        if (localStorage.getItem("tetris-muted") === "true" || localStorage.getItem("tetris-mute-all") === "true") {
+        if (
+          localStorage.getItem("tetris-muted") === "true" ||
+          localStorage.getItem("tetris-mute-all") === "true"
+        ) {
           muteMusic = true;
           muteSfx = true;
           localStorage.setItem("tetris-mute-music", "true");
@@ -1002,7 +994,6 @@
         function applyMute() {
           audioEl.muted = muteMusic;
           audioEl.volume = muteMusic ? 0 : AUDIO_VOLUME;
-          muteBtn.textContent = "Audio";
           if (gameAudio && gameAudio.masterGain) {
             gameAudio.masterGain.gain.value = muteSfx ? 0 : SFX_VOLUME;
           }
@@ -1031,21 +1022,19 @@
         }
 
         function saveMuteState() {
-          localStorage.setItem("tetris-mute-music", muteMusic ? "true" : "false");
+          localStorage.setItem(
+            "tetris-mute-music",
+            muteMusic ? "true" : "false",
+          );
           localStorage.setItem("tetris-mute-sfx", muteSfx ? "true" : "false");
           applyMute();
           startAudio();
         }
 
-        // Audio settings overlay
-        const audioOverlay = document.getElementById("audio-overlay");
+        // Settings overlay
+        const settingsOverlay = document.getElementById("settings-overlay");
         const btnMuteMusic = document.getElementById("btn-mute-music");
         const btnMuteSfx = document.getElementById("btn-mute-sfx");
-        const btnAudioBack = document.getElementById("btn-audio-back");
-        const audioMenuBtns = [btnMuteMusic, btnMuteSfx, btnAudioBack];
-        let audioMenuIdx = 0;
-        let audioMenuOpen = false;
-        let wasPausedBeforeAudio = false;
 
         function updateAudioMenuLabels() {
           btnMuteMusic.textContent = muteMusic ? "Unmute Music" : "Mute Music";
@@ -1054,79 +1043,20 @@
           btnMuteSfx.classList.toggle("active", muteSfx);
         }
 
-        function highlightAudioBtn() {
-          for (let i = 0; i < audioMenuBtns.length; i++)
-            audioMenuBtns[i].classList.toggle("selected", i === audioMenuIdx);
-        }
-
-        function openAudioMenu() {
-          if (audioMenuOpen) return;
-          audioMenuOpen = true;
-          wasPausedBeforeAudio = paused;
-          if (started && !gameOver && !paused) {
-            paused = true;
-          }
-          audioMenuIdx = 0;
-          updateAudioMenuLabels();
-          highlightAudioBtn();
-          pauseOverlay.classList.add("hidden");
-          audioOverlay.classList.remove("hidden");
-        }
-
-        function closeAudioMenu() {
-          if (!audioMenuOpen) return;
-          audioMenuOpen = false;
-          audioOverlay.classList.add("hidden");
-          if (started && !gameOver) {
-            if (wasPausedBeforeAudio) {
-              // Return to pause menu
-              pauseMenuIdx = 0;
-              highlightPauseBtn();
-              pauseOverlay.classList.remove("hidden");
-            } else {
-              paused = false;
-              lastTime = performance.now();
-            }
-          }
-        }
-
-        function toggleAudioOption(idx) {
-          if (idx === 0) {
-            muteMusic = !muteMusic;
-          } else if (idx === 1) {
-            muteSfx = !muteSfx;
-          } else if (idx === 2) {
-            closeAudioMenu();
-            return;
-          }
-          saveMuteState();
-        }
-
         btnMuteMusic.addEventListener("click", () => {
           btnMuteMusic.blur();
-          toggleAudioOption(0);
+          muteMusic = !muteMusic;
+          saveMuteState();
         });
         btnMuteSfx.addEventListener("click", () => {
           btnMuteSfx.blur();
-          toggleAudioOption(1);
-        });
-        btnAudioBack.addEventListener("click", () => {
-          btnAudioBack.blur();
-          closeAudioMenu();
+          muteSfx = !muteSfx;
+          saveMuteState();
         });
 
-        muteBtn.addEventListener("click", () => {
-          muteBtn.blur();
-          if (audioMenuOpen) {
-            closeAudioMenu();
-          } else {
-            openAudioMenu();
-          }
-        });
-
-        const pauseBtn = document.getElementById("pause-btn");
-        pauseBtn.addEventListener("click", () => {
-          pauseBtn.blur();
+        const settingsBtn = document.getElementById("settings-btn");
+        settingsBtn.addEventListener("click", () => {
+          settingsBtn.blur();
           if (started && !gameOver) togglePause();
         });
 
@@ -1579,7 +1509,7 @@
         const speedEl = document.getElementById("speed-display");
         const linesEl = document.getElementById("lines");
         const startOverlay = document.getElementById("start-overlay");
-        const pauseOverlay = document.getElementById("pause-overlay");
+        const pauseOverlay = settingsOverlay;
         const gameoverOverlay = document.getElementById("gameover-overlay");
         const finalScoreEl = document.getElementById("final-score");
         const finalBestEl = document.getElementById("final-best");
@@ -2066,39 +1996,6 @@
 
         // ─── Input ───
         document.addEventListener("keydown", (e) => {
-          // Allow audio menu toggle in any state
-          if (e.code === "KeyM") {
-            e.preventDefault();
-            if (audioMenuOpen) {
-              closeAudioMenu();
-            } else {
-              openAudioMenu();
-            }
-            return;
-          }
-
-          // Handle audio menu keyboard navigation
-          if (audioMenuOpen) {
-            if (e.code === "ArrowUp" || e.code === "KeyW") {
-              e.preventDefault();
-              audioMenuIdx =
-                (audioMenuIdx - 1 + audioMenuBtns.length) %
-                audioMenuBtns.length;
-              highlightAudioBtn();
-            } else if (e.code === "ArrowDown" || e.code === "KeyS") {
-              e.preventDefault();
-              audioMenuIdx = (audioMenuIdx + 1) % audioMenuBtns.length;
-              highlightAudioBtn();
-            } else if (e.code === "Enter" || e.code === "Space") {
-              e.preventDefault();
-              toggleAudioOption(audioMenuIdx);
-            } else if (e.code === "Escape") {
-              e.preventDefault();
-              closeAudioMenu();
-            }
-            return;
-          }
-
           if (!started) {
             if (e.code === "ArrowLeft" || e.code === "KeyA") {
               e.preventDefault();
@@ -2109,6 +2006,9 @@
             } else if (e.code === "Space" || e.code === "Enter") {
               e.preventDefault();
               startGame();
+            } else if (e.code === "KeyG") {
+              e.preventDefault();
+              window.open("https://github.com/MehmetMHY/tetris", "_blank");
             }
             return;
           }
@@ -2116,14 +2016,14 @@
           if (gameOver) {
             if (e.code === "Escape") {
               quitToTitle();
-            } else if (e.code !== "KeyP") {
+            } else {
               gameoverOverlay.classList.add("hidden");
               startGame();
             }
             return;
           }
 
-          if (e.code === "KeyP" || e.code === "Escape") {
+          if (e.code === "Escape" || e.code === "KeyM") {
             togglePause();
             return;
           }
@@ -2568,9 +2468,18 @@
           { passive: false },
         );
 
+        const btnSource = document.getElementById("btn-source");
+        btnSource.addEventListener("click", () => {
+          btnSource.blur();
+          window.open("https://github.com/MehmetMHY/tetris", "_blank");
+        });
+
         const pauseMenuBtns = [
           document.getElementById("btn-resume"),
+          btnMuteMusic,
+          btnMuteSfx,
           document.getElementById("btn-restart"),
+          btnSource,
           document.getElementById("btn-quit"),
         ];
         let pauseMenuIdx = 0;
@@ -2584,11 +2493,20 @@
           paused = !paused;
           if (paused) {
             pauseMenuIdx = 0;
+            updateAudioMenuLabels();
             highlightPauseBtn();
             pauseOverlay.classList.remove("hidden");
+            audioEl.pause();
+            if (gameAudio && gameAudio.masterGain) {
+              gameAudio.masterGain.gain.value = 0;
+            }
           } else {
             pauseOverlay.classList.add("hidden");
             lastTime = performance.now();
+            applyMute();
+            if (!muteMusic && audioStarted) {
+              audioEl.play().catch(() => {});
+            }
           }
         }
 
@@ -2597,6 +2515,10 @@
           paused = false;
           pauseOverlay.classList.add("hidden");
           lastTime = performance.now();
+          applyMute();
+          if (!muteMusic && audioStarted) {
+            audioEl.play().catch(() => {});
+          }
         }
 
         function quitToTitle() {
@@ -2606,8 +2528,6 @@
           cancelAnimationFrame(rafId);
           pauseOverlay.classList.add("hidden");
           gameoverOverlay.classList.add("hidden");
-          audioOverlay.classList.add("hidden");
-          audioMenuOpen = false;
           startOverlay.classList.remove("hidden");
           ctx.drawImage(bgCanvas, 0, 0);
           drawPreview(nctx, nextCanvas, null);
@@ -2736,8 +2656,6 @@
           startOverlay.classList.add("hidden");
           gameoverOverlay.classList.add("hidden");
           pauseOverlay.classList.add("hidden");
-          audioOverlay.classList.add("hidden");
-          audioMenuOpen = false;
 
           applyMute();
           startAudio();
