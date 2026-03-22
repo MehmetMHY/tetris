@@ -26,9 +26,8 @@ The problem was that there was no version that fit how I wanted to play. Mobile 
 - Level-based speed curve with dynamic lock delay
 - Score, lines, level, and high score tracking persisted to local storage
 - Soft drop and hard drop scoring
-- Pause menu with resume, restart, and quit options
+- Settings menu with resume, restart, quit, mute music/SFX, and source code link
 - Line clear flash animation with sound effect
-- Audio settings menu with independent mute for music and SFX (state persisted)
 - iOS safe area support (Dynamic Island, notch, home indicator)
 - Offline support via Service Worker (works without internet after first visit)
 - Installable as a PWA (add to home screen on iOS/Android for app-like experience)
@@ -37,16 +36,16 @@ The problem was that there was no version that fit how I wanted to play. Mobile 
 
 ### Desktop (Keyboard)
 
-| Action     | Keys               |
-| ---------- | ------------------ |
-| Move       | `←` `→` or `A` `D` |
-| Soft Drop  | `↓` or `S`         |
-| Hard Drop  | `Space`            |
-| Rotate CW  | `↑` `W` `X`        |
-| Rotate CCW | `Z`                |
-| Hold       | `C` or `LShift`    |
-| Audio      | `M`                |
-| Pause      | `Esc` or `P`       |
+| Action      | Keys                 |
+| ----------- | -------------------- |
+| Move        | `←` `→` or `A` `D`   |
+| Soft Drop   | `↓` or `S`           |
+| Hard Drop   | `Space`              |
+| Rotate CW   | `↑` `W` `X`          |
+| Rotate CCW  | `Z`                  |
+| Hold        | `C` or `LShift`      |
+| Settings    | `Esc` or `M`         |
+| Source Code | `G` _(title screen)_ |
 
 ### Mobile (Touch)
 
@@ -76,11 +75,16 @@ python3 cli.py -d
 
 ## Built With
 
-- [Claude Code CLI](https://code.claude.com/docs/en/overview)
-- [Gemini CLI](https://github.com/google-gemini/gemini-cli)
-- [Cha CLI](https://github.com/MehmetMHY/ch)
+- [Claude Code CLI](https://code.claude.com/docs/en/overview) _(writing code)_
+- [Gemini CLI](https://github.com/google-gemini/gemini-cli) _(writing code)_
+- [Cha CLI](https://github.com/MehmetMHY/ch) _(research, CLI scripts, README)_
 - [xAI Grok Web App](https://grok.com/) _(logos/icons)_
-- [Perplexity](https://www.perplexity.ai/) _(research bugs)_
+- [Perplexity](https://www.perplexity.ai/) _(research/bugs)_
+- [Google Search](https://www.google.com/) _(finding SVGs and other assets)_
+- [YouTube](https://www.youtube.com/) + [yt-dlp](https://github.com/yt-dlp/yt-dlp) _(sourcing audio clips)_
+- [FFmpeg](https://www.ffmpeg.org/) _(editing audio files)_
+- [macOS Preview](<https://en.wikipedia.org/wiki/Preview_(Apple)>) _(editing logos/images)_
+- [Python](https://www.python.org/) _(misc scripting)_
 
 ## Speed Tuning & Game Theory
 
