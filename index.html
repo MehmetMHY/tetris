@@ -799,16 +799,16 @@
             if (!Ctx) return;
 
             try {
-              this.ctx = new Ctx({ latencyHint: 'interactive' });
+              this.ctx = new Ctx({ latencyHint: "interactive" });
               this.masterGain = this.ctx.createGain();
               this.masterGain.gain.value = muted ? 0 : SFX_VOLUME;
               this.masterGain.connect(this.ctx.destination);
-            } catch(e) {}
+            } catch (e) {}
 
-            document.addEventListener('visibilitychange', () => {
-              if (document.visibilityState === 'visible') this.resumeIfNeeded();
+            document.addEventListener("visibilitychange", () => {
+              if (document.visibilityState === "visible") this.resumeIfNeeded();
             });
-            window.addEventListener('pageshow', () => this.resumeIfNeeded());
+            window.addEventListener("pageshow", () => this.resumeIfNeeded());
           }
 
           async unlock() {
@@ -819,8 +819,13 @@
               await this.init();
               if (!this.ctx) return false;
 
-              if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
-                try { await this.ctx.resume(); } catch (e) {}
+              if (
+                this.ctx.state === "suspended" ||
+                this.ctx.state === "interrupted"
+              ) {
+                try {
+                  await this.ctx.resume();
+                } catch (e) {}
               }
 
               try {
@@ -831,7 +836,7 @@
                 src.start(0);
               } catch (e) {}
 
-              this.unlocked = this.ctx.state === 'running';
+              this.unlocked = this.ctx.state === "running";
               return this.unlocked;
             })();
 
@@ -844,8 +849,13 @@
 
           async resumeIfNeeded() {
             if (!this.ctx) return;
-            if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
-              try { await this.ctx.resume(); } catch (e) {}
+            if (
+              this.ctx.state === "suspended" ||
+              this.ctx.state === "interrupted"
+            ) {
+              try {
+                await this.ctx.resume();
+              } catch (e) {}
             }
           }
 
@@ -854,19 +864,21 @@
             if (!this.ctx) return null;
 
             try {
-              const res = await fetch(url, { cache: 'force-cache' });
+              const res = await fetch(url, { cache: "force-cache" });
               if (!res.ok) throw new Error();
               const arr = await res.arrayBuffer();
               const buffer = await this.ctx.decodeAudioData(arr);
               this.buffers.set(name, buffer);
               return buffer;
-            } catch(e) { return null; }
+            } catch (e) {
+              return null;
+            }
           }
 
           registerHtmlFallback(name, url, poolSize = 4) {
             const pool = Array.from({ length: poolSize }, () => {
               const a = new Audio(url);
-              a.preload = 'auto';
+              a.preload = "auto";
               a.playsInline = true;
               a.volume = SFX_VOLUME;
               return a;
@@ -878,7 +890,7 @@
             await this.resumeIfNeeded();
 
             const buffer = this.buffers.get(name);
-            if (this.ctx && this.ctx.state === 'running' && buffer) {
+            if (this.ctx && this.ctx.state === "running" && buffer) {
               try {
                 const src = this.ctx.createBufferSource();
                 src.buffer = buffer;
@@ -901,13 +913,15 @@
               a.currentTime = 0;
               await a.play();
               return true;
-            } catch (e) { return false; }
+            } catch (e) {
+              return false;
+            }
           }
         }
 
         const gameAudio = new GameAudio();
-        gameAudio.registerHtmlFallback('lineClear', 'assets/UMViM2tHrOk.mp3');
-        gameAudio.loadBuffer('lineClear', 'assets/UMViM2tHrOk.mp3');
+        gameAudio.registerHtmlFallback("lineClear", "assets/UMViM2tHrOk.mp3");
+        gameAudio.loadBuffer("lineClear", "assets/UMViM2tHrOk.mp3");
 
         function applyMute() {
           audioEl.muted = muted;
@@ -939,7 +953,7 @@
 
         function playLineClearSound() {
           if (!muted) {
-            gameAudio.play('lineClear');
+            gameAudio.play("lineClear");
           }
         }
 
