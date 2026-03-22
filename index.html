@@ -781,6 +781,133 @@
         const AUDIO_VOLUME = 0.12;
         let muted = localStorage.getItem("tetris-muted") === "true";
 
+        class GameAudio {
+          constructor() {
+            this.ctx = null;
+            this.masterGain = null;
+            this.buffers = new Map();
+            this.unlocked = false;
+            this.unlocking = null;
+            this.htmlFallback = new Map();
+          }
+
+          async init() {
+            if (this.ctx) return;
+
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return;
+
+            try {
+              this.ctx = new Ctx({ latencyHint: 'interactive' });
+              this.masterGain = this.ctx.createGain();
+              this.masterGain.gain.value = AUDIO_VOLUME;
+              this.masterGain.connect(this.ctx.destination);
+            } catch(e) {}
+
+            document.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'visible') this.resumeIfNeeded();
+            });
+            window.addEventListener('pageshow', () => this.resumeIfNeeded());
+          }
+
+          async unlock() {
+            if (this.unlocked) return true;
+            if (this.unlocking) return this.unlocking;
+
+            this.unlocking = (async () => {
+              await this.init();
+              if (!this.ctx) return false;
+
+              if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
+                try { await this.ctx.resume(); } catch (e) {}
+              }
+
+              try {
+                const buffer = this.ctx.createBuffer(1, 1, this.ctx.sampleRate);
+                const src = this.ctx.createBufferSource();
+                src.buffer = buffer;
+                src.connect(this.masterGain);
+                src.start(0);
+              } catch (e) {}
+
+              this.unlocked = this.ctx.state === 'running';
+              return this.unlocked;
+            })();
+
+            try {
+              return await this.unlocking;
+            } finally {
+              this.unlocking = null;
+            }
+          }
+
+          async resumeIfNeeded() {
+            if (!this.ctx) return;
+            if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
+              try { await this.ctx.resume(); } catch (e) {}
+            }
+          }
+
+          async loadBuffer(name, url) {
+            await this.init();
+            if (!this.ctx) return null;
+
+            try {
+              const res = await fetch(url, { cache: 'force-cache' });
+              if (!res.ok) throw new Error();
+              const arr = await res.arrayBuffer();
+              const buffer = await this.ctx.decodeAudioData(arr);
+              this.buffers.set(name, buffer);
+              return buffer;
+            } catch(e) { return null; }
+          }
+
+          registerHtmlFallback(name, url, poolSize = 4) {
+            const pool = Array.from({ length: poolSize }, () => {
+              const a = new Audio(url);
+              a.preload = 'auto';
+              a.playsInline = true;
+              a.volume = AUDIO_VOLUME;
+              return a;
+            });
+            this.htmlFallback.set(name, { pool, i: 0 });
+          }
+
+          async play(name) {
+            await this.resumeIfNeeded();
+
+            const buffer = this.buffers.get(name);
+            if (this.ctx && this.ctx.state === 'running' && buffer) {
+              try {
+                const src = this.ctx.createBufferSource();
+                src.buffer = buffer;
+                src.connect(this.masterGain);
+                src.start(this.ctx.currentTime);
+                return true;
+              } catch (e) {}
+            }
+
+            return this.playHtmlFallback(name);
+          }
+
+          async playHtmlFallback(name) {
+            const entry = this.htmlFallback.get(name);
+            if (!entry) return false;
+
+            const a = entry.pool[entry.i++ % entry.pool.length];
+            try {
+              a.pause();
+              a.currentTime = 0;
+              await a.play();
+              return true;
+            } catch (e) { return false; }
+          }
+        }
+
+        const gameAudio = new GameAudio();
+        gameAudio.registerHtmlFallback('lineClear', 'assets/UMViM2tHrOk.mp3');
+        gameAudio.loadBuffer('lineClear', 'assets/UMViM2tHrOk.mp3');
+
         function applyMute() {
           audioEl.muted = muted;
           audioEl.volume = muted ? 0 : AUDIO_VOLUME;
@@ -790,11 +917,15 @@
           } else {
             muteBtn.classList.remove("muted");
           }
+          if (gameAudio && gameAudio.masterGain) {
+            gameAudio.masterGain.gain.value = muted ? 0 : AUDIO_VOLUME;
+          }
         }
 
         function startAudio() {
           if (!audioStarted) {
             applyMute();
+            gameAudio.unlock();
             audioEl
               .play()
               .then(() => {
@@ -807,9 +938,7 @@
 
         function playLineClearSound() {
           if (!muted) {
-            lineClearAudio.volume = AUDIO_VOLUME;
-            lineClearAudio.currentTime = 0;
-            lineClearAudio.play().catch(() => {});
+            gameAudio.play('lineClear');
           }
         }
 
