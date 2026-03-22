@@ -486,6 +486,10 @@
         outline: none;
       }
 
+      #audio-overlay h2 {
+        color: #fff;
+      }
+
       .audio-toggle {
         background: #1a3a1a;
         border-color: #4a4;
@@ -683,9 +687,6 @@
       <div class="overlay-content">
         <h2>AUDIO</h2>
         <div class="menu-buttons">
-          <button class="menu-btn audio-toggle" id="btn-mute-all">
-            Mute All
-          </button>
           <button class="menu-btn audio-toggle" id="btn-mute-music">
             Mute Music
           </button>
@@ -826,19 +827,17 @@
         const AUDIO_VOLUME = 0.12;
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         const SFX_VOLUME = isMobile ? 0.55 : 0.15;
-        // Migrate old single muted state to new granular states
-        let muteAll = localStorage.getItem("tetris-mute-all") === "true";
         let muteMusic = localStorage.getItem("tetris-mute-music") === "true";
         let muteSfx = localStorage.getItem("tetris-mute-sfx") === "true";
-        // Migrate from old single muted key
-        if (
-          localStorage.getItem("tetris-muted") === "true" &&
-          !localStorage.getItem("tetris-mute-all")
-        ) {
-          muteAll = true;
-          localStorage.setItem("tetris-mute-all", "true");
+        // Migrate from old mute keys
+        if (localStorage.getItem("tetris-muted") === "true" || localStorage.getItem("tetris-mute-all") === "true") {
+          muteMusic = true;
+          muteSfx = true;
+          localStorage.setItem("tetris-mute-music", "true");
+          localStorage.setItem("tetris-mute-sfx", "true");
         }
         localStorage.removeItem("tetris-muted");
+        localStorage.removeItem("tetris-mute-all");
 
         class GameAudio {
           constructor() {
@@ -859,7 +858,7 @@
             try {
               this.ctx = new Ctx({ latencyHint: "interactive" });
               this.masterGain = this.ctx.createGain();
-              this.masterGain.gain.value = muteAll || muteSfx ? 0 : SFX_VOLUME;
+              this.masterGain.gain.value = muteSfx ? 0 : SFX_VOLUME;
               this.masterGain.connect(this.ctx.destination);
             } catch (e) {}
 
@@ -982,13 +981,11 @@
         gameAudio.loadBuffer("lineClear", "assets/UMViM2tHrOk.mp3");
 
         function applyMute() {
-          const musicMuted = muteAll || muteMusic;
-          const sfxMuted = muteAll || muteSfx;
-          audioEl.muted = musicMuted;
-          audioEl.volume = musicMuted ? 0 : AUDIO_VOLUME;
+          audioEl.muted = muteMusic;
+          audioEl.volume = muteMusic ? 0 : AUDIO_VOLUME;
           muteBtn.textContent = "Audio";
           if (gameAudio && gameAudio.masterGain) {
-            gameAudio.masterGain.gain.value = sfxMuted ? 0 : SFX_VOLUME;
+            gameAudio.masterGain.gain.value = muteSfx ? 0 : SFX_VOLUME;
           }
           // Update audio menu button labels
           updateAudioMenuLabels();
@@ -1009,17 +1006,13 @@
         }
 
         function playLineClearSound() {
-          if (!muteAll && !muteSfx) {
+          if (!muteSfx) {
             gameAudio.play("lineClear");
           }
         }
 
         function saveMuteState() {
-          localStorage.setItem("tetris-mute-all", muteAll ? "true" : "false");
-          localStorage.setItem(
-            "tetris-mute-music",
-            muteMusic ? "true" : "false",
-          );
+          localStorage.setItem("tetris-mute-music", muteMusic ? "true" : "false");
           localStorage.setItem("tetris-mute-sfx", muteSfx ? "true" : "false");
           applyMute();
           startAudio();
@@ -1027,35 +1020,19 @@
 
         // Audio settings overlay
         const audioOverlay = document.getElementById("audio-overlay");
-        const btnMuteAll = document.getElementById("btn-mute-all");
         const btnMuteMusic = document.getElementById("btn-mute-music");
         const btnMuteSfx = document.getElementById("btn-mute-sfx");
         const btnAudioBack = document.getElementById("btn-audio-back");
-        const audioMenuBtns = [
-          btnMuteAll,
-          btnMuteMusic,
-          btnMuteSfx,
-          btnAudioBack,
-        ];
+        const audioMenuBtns = [btnMuteMusic, btnMuteSfx, btnAudioBack];
         let audioMenuIdx = 0;
         let audioMenuOpen = false;
         let wasPausedBeforeAudio = false;
 
         function updateAudioMenuLabels() {
-          if (btnMuteAll) {
-            btnMuteAll.textContent = muteAll ? "Unmute All" : "Mute All";
-            btnMuteAll.classList.toggle("active", muteAll);
-          }
-          if (btnMuteMusic) {
-            btnMuteMusic.textContent = muteMusic
-              ? "Unmute Music"
-              : "Mute Music";
-            btnMuteMusic.classList.toggle("active", muteMusic);
-          }
-          if (btnMuteSfx) {
-            btnMuteSfx.textContent = muteSfx ? "Unmute SFX" : "Mute SFX";
-            btnMuteSfx.classList.toggle("active", muteSfx);
-          }
+          btnMuteMusic.textContent = muteMusic ? "Unmute Music" : "Mute Music";
+          btnMuteMusic.classList.toggle("active", muteMusic);
+          btnMuteSfx.textContent = muteSfx ? "Unmute SFX" : "Mute SFX";
+          btnMuteSfx.classList.toggle("active", muteSfx);
         }
 
         function highlightAudioBtn() {
@@ -1096,29 +1073,23 @@
 
         function toggleAudioOption(idx) {
           if (idx === 0) {
-            muteAll = !muteAll;
-          } else if (idx === 1) {
             muteMusic = !muteMusic;
-          } else if (idx === 2) {
+          } else if (idx === 1) {
             muteSfx = !muteSfx;
-          } else if (idx === 3) {
+          } else if (idx === 2) {
             closeAudioMenu();
             return;
           }
           saveMuteState();
         }
 
-        btnMuteAll.addEventListener("click", () => {
-          btnMuteAll.blur();
-          toggleAudioOption(0);
-        });
         btnMuteMusic.addEventListener("click", () => {
           btnMuteMusic.blur();
-          toggleAudioOption(1);
+          toggleAudioOption(0);
         });
         btnMuteSfx.addEventListener("click", () => {
           btnMuteSfx.blur();
-          toggleAudioOption(2);
+          toggleAudioOption(1);
         });
         btnAudioBack.addEventListener("click", () => {
           btnAudioBack.blur();
@@ -2767,7 +2738,7 @@
               togglePause();
             }
           } else {
-            if (!(muteAll || muteMusic) && audioStarted) {
+            if (!muteMusic && audioStarted) {
               audioEl.play().catch(() => {});
             }
           }
