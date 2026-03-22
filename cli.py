@@ -11,6 +11,7 @@ import os
 import re
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_URL = "https://github.com/MehmetMHY/tetris"
 
 
 def find_open_port(start=8000, max_attempts=100):
@@ -20,6 +21,16 @@ def find_open_port(start=8000, max_attempts=100):
                 return port
     print("error: could not find an available port")
     sys.exit(1)
+
+
+def cmd_open(url):
+    system = sys.platform
+    if system == "darwin":
+        subprocess.run(["open", url], check=True)
+    elif system == "win32":
+        subprocess.run(["start", url], check=True, shell=True)
+    else:
+        subprocess.run(["xdg-open", url], check=True)
 
 
 def cmd_run():
@@ -116,6 +127,12 @@ def main():
         help="start local dev server and open in browser",
     )
     parser.add_argument(
+        "-o",
+        "--open",
+        action="store_true",
+        help="open the github repo in the default browser",
+    )
+    parser.add_argument(
         "-d",
         "--deploy",
         action="store_true",
@@ -124,18 +141,21 @@ def main():
 
     args = parser.parse_args()
 
-    if not args.run and not args.deploy:
+    if not args.run and not args.deploy and not args.open:
         parser.print_help()
         sys.exit(0)
 
-    if args.run and args.deploy:
-        print("error: use either -r or -d, not both")
+    selected = sum([args.run, args.deploy, args.open])
+    if selected > 1:
+        print("error: use only one of -r, -d, or -o")
         sys.exit(1)
 
     if args.run:
         cmd_run()
     elif args.deploy:
         cmd_deploy()
+    elif args.open:
+        cmd_open(url=REPO_URL)
 
 
 if __name__ == "__main__":
