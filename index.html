@@ -2422,8 +2422,15 @@
 
         // ─── Auto-pause when leaving app (iOS home swipe, tab switch, etc.) ───
         document.addEventListener("visibilitychange", () => {
-          if (document.hidden && started && !gameOver && !paused) {
-            togglePause();
+          if (document.hidden) {
+            audioEl.pause();
+            if (started && !gameOver && !paused) {
+              togglePause();
+            }
+          } else {
+            if (!muted && audioStarted) {
+              audioEl.play().catch(() => {});
+            }
           }
         });
 
