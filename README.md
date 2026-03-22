@@ -27,7 +27,7 @@ The problem was that there was no version that fit how I wanted to play. Mobile 
 - Score, lines, level, and high score tracking persisted to local storage
 - Soft drop and hard drop scoring
 - Pause menu with resume, restart, and quit options
-- Line clear flash animation
+- Line clear flash animation with sound effect
 - Background music with mute toggle (state persisted)
 - iOS safe area support (Dynamic Island, notch, home indicator)
 - Offline support via Service Worker (works without internet after first visit)
@@ -101,6 +101,7 @@ Based on all of this, the speed curve here caps gravity at 33ms per row (similar
 - To push updates to offline/PWA users, run `python3 cli.py -d` which bumps `CACHE_NAME` in `sw.js`, stages changes, and commits/pushes in one step
 - Assets (icons, audio) live in the `assets/` directory
 - Background music source [NmCCQxVBfyM](https://www.youtube.com/watch?v=NmCCQxVBfyM)
+- Line clear sound effect source [UMViM2tHrOk](https://www.youtube.com/watch?v=UMViM2tHrOk)
 
 ## License
 

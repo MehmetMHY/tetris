@@ -540,6 +540,9 @@
     <audio id="background-audio" loop>
       <source src="assets/NmCCQxVBfyM.mp3" type="audio/mpeg" />
     </audio>
+    <audio id="line-clear-audio" preload="auto">
+      <source src="assets/UMViM2tHrOk.mp3" type="audio/mpeg" />
+    </audio>
     <div class="game-container">
       <!-- Left Panel -->
       <div class="side-panel">
@@ -772,6 +775,7 @@
       (() => {
         // ─── Audio Setup ───
         const audioEl = document.getElementById("background-audio");
+        const lineClearAudio = document.getElementById("line-clear-audio");
         const muteBtn = document.getElementById("mute-btn");
         let audioStarted = false;
         let muted = localStorage.getItem("tetris-muted") === "true";
@@ -797,6 +801,13 @@
                 applyMute();
               })
               .catch(() => {});
+          }
+        }
+
+        function playLineClearSound() {
+          if (!muted) {
+            lineClearAudio.currentTime = 0;
+            lineClearAudio.play().catch(() => {});
           }
         }
 
@@ -1407,6 +1418,7 @@
           }
           boardDirty = true;
 
+          playLineClearSound();
           const count = full.length;
           lines += count;
           score += LINE_SCORES[count] * level;
