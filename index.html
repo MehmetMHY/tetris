@@ -779,6 +779,7 @@
         const muteBtn = document.getElementById("mute-btn");
         let audioStarted = false;
         const AUDIO_VOLUME = 0.12;
+        const SFX_VOLUME = 0.55;
         let muted = localStorage.getItem("tetris-muted") === "true";
 
         class GameAudio {
@@ -800,7 +801,7 @@
             try {
               this.ctx = new Ctx({ latencyHint: 'interactive' });
               this.masterGain = this.ctx.createGain();
-              this.masterGain.gain.value = muted ? 0 : audioEl.volume;
+              this.masterGain.gain.value = muted ? 0 : SFX_VOLUME;
               this.masterGain.connect(this.ctx.destination);
             } catch(e) {}
 
@@ -867,7 +868,7 @@
               const a = new Audio(url);
               a.preload = 'auto';
               a.playsInline = true;
-              a.volume = AUDIO_VOLUME;
+              a.volume = SFX_VOLUME;
               return a;
             });
             this.htmlFallback.set(name, { pool, i: 0 });
@@ -918,7 +919,7 @@
             muteBtn.classList.remove("muted");
           }
           if (gameAudio && gameAudio.masterGain) {
-            gameAudio.masterGain.gain.value = muted ? 0 : audioEl.volume;
+            gameAudio.masterGain.gain.value = muted ? 0 : SFX_VOLUME;
           }
         }
 
