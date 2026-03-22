@@ -779,7 +779,8 @@
         const muteBtn = document.getElementById("mute-btn");
         let audioStarted = false;
         const AUDIO_VOLUME = 0.12;
-        const SFX_VOLUME = 0.55;
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const SFX_VOLUME = isMobile ? 0.55 : 0.15;
         let muted = localStorage.getItem("tetris-muted") === "true";
 
         class GameAudio {
