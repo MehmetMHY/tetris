@@ -540,6 +540,9 @@
     <audio id="background-audio" loop>
       <source src="assets/NmCCQxVBfyM.mp3" type="audio/mpeg" />
     </audio>
+    <audio id="line-clear-audio" preload="auto">
+      <source src="assets/UMViM2tHrOk.mp3" type="audio/mpeg" />
+    </audio>
     <div class="game-container">
       <!-- Left Panel -->
       <div class="side-panel">
@@ -772,26 +775,11 @@
       (() => {
         // ─── Audio Setup ───
         const audioEl = document.getElementById("background-audio");
+        const lineClearAudio = document.getElementById("line-clear-audio");
         const muteBtn = document.getElementById("mute-btn");
         let audioStarted = false;
         const AUDIO_VOLUME = 0.12;
         let muted = localStorage.getItem("tetris-muted") === "true";
-
-        // Web Audio API for low-latency sound effects
-        let audioCtx = null;
-        let lineClearBuffer = null;
-
-        function initAudioContext() {
-          if (audioCtx) return;
-          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          fetch("assets/UMViM2tHrOk.mp3")
-            .then((r) => r.arrayBuffer())
-            .then((buf) => audioCtx.decodeAudioData(buf))
-            .then((decoded) => {
-              lineClearBuffer = decoded;
-            })
-            .catch(() => {});
-        }
 
         function applyMute() {
           audioEl.muted = muted;
@@ -805,7 +793,6 @@
         }
 
         function startAudio() {
-          initAudioContext();
           if (!audioStarted) {
             applyMute();
             audioEl
@@ -819,14 +806,10 @@
         }
 
         function playLineClearSound() {
-          if (!muted && audioCtx && lineClearBuffer) {
-            const source = audioCtx.createBufferSource();
-            const gain = audioCtx.createGain();
-            gain.gain.value = AUDIO_VOLUME;
-            source.buffer = lineClearBuffer;
-            source.connect(gain);
-            gain.connect(audioCtx.destination);
-            source.start(0);
+          if (!muted) {
+            lineClearAudio.volume = AUDIO_VOLUME;
+            lineClearAudio.currentTime = 0;
+            lineClearAudio.play().catch(() => {});
           }
         }
 
