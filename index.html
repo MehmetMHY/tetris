@@ -778,11 +778,12 @@
         const lineClearAudio = document.getElementById("line-clear-audio");
         const muteBtn = document.getElementById("mute-btn");
         let audioStarted = false;
+        const AUDIO_VOLUME = 0.12;
         let muted = localStorage.getItem("tetris-muted") === "true";
 
         function applyMute() {
           audioEl.muted = muted;
-          audioEl.volume = muted ? 0 : 1;
+          audioEl.volume = muted ? 0 : AUDIO_VOLUME;
           muteBtn.textContent = muted ? "Muted" : "Mute";
           if (muted) {
             muteBtn.classList.add("muted");
@@ -806,6 +807,7 @@
 
         function playLineClearSound() {
           if (!muted) {
+            lineClearAudio.volume = AUDIO_VOLUME;
             lineClearAudio.currentTime = 0;
             lineClearAudio.play().catch(() => {});
           }
