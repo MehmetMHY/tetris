@@ -401,6 +401,22 @@
         animation: blink 1.2s infinite;
       }
 
+      .source-link {
+        display: inline-block;
+        margin-top: 6px;
+        opacity: 0.5;
+        transition: opacity 0.2s;
+      }
+
+      .source-link:hover {
+        opacity: 1;
+      }
+
+      .source-link img {
+        display: block;
+        filter: invert(1);
+      }
+
       @keyframes blink {
         0%,
         100% {
@@ -666,7 +682,10 @@
             <button class="level-arrow" id="level-up">&rarr;</button>
           </div>
         </div>
-        <p class="prompt">Press Space, Enter, or Tap to start</p>
+        <p class="prompt">Press space or tap to start</p>
+        <a href="https://github.com/MehmetMHY/tetris" target="_blank" rel="noopener noreferrer" class="source-link" title="Source Code">
+          <img src="assets/github.svg" alt="GitHub" width="34" height="34" />
+        </a>
       </div>
     </div>
 
@@ -2747,7 +2766,7 @@
         // ─── Touch Start/Restart ───
         startOverlay.addEventListener("click", (e) => {
           // Existing buttons have stopPropagation, but just in case
-          if (e.target.closest(".level-selector")) return;
+          if (e.target.closest(".level-selector, .source-link")) return;
           if (!started) startGame();
         });
 
