@@ -5,8 +5,6 @@
 <h1 align="center">Tetris</h1>
 
 <br>
-<br>
-<br>
 
 ## About
 
