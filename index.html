@@ -486,6 +486,32 @@
         outline: none;
       }
 
+      .audio-toggle {
+        background: #1a3a1a;
+        border-color: #4a4;
+        color: #6c6;
+      }
+
+      .audio-toggle:hover,
+      .audio-toggle:focus,
+      .audio-toggle.selected {
+        background: #2a4a2a;
+        border-color: #88f;
+      }
+
+      .audio-toggle.active {
+        background: #4a2a2a;
+        border-color: #f66;
+        color: #f88;
+      }
+
+      .audio-toggle.active:hover,
+      .audio-toggle.active:focus,
+      .audio-toggle.active.selected {
+        background: #5a3a3a;
+        border-color: #88f;
+      }
+
       .level-picker {
         margin: 0;
         display: flex;
@@ -591,14 +617,14 @@
           <kbd>&uarr;</kbd><kbd>W</kbd> / <kbd>X</kbd> Rotate CW<br />
           <kbd>Z</kbd> Rotate CCW<br />
           <kbd>C</kbd> / <kbd>LShift</kbd> Hold<br />
-          <kbd>M</kbd> Mute/Unmute<br />
+          <kbd>M</kbd> Audio settings<br />
           <kbd>Esc</kbd> / <kbd>P</kbd> Pause
         </div>
 
         <!-- Buttons -->
         <div class="button-group box-buttons">
           <button class="settings-btn" id="pause-btn">Pause</button>
-          <button class="mute-btn" id="mute-btn">Mute</button>
+          <button class="mute-btn" id="mute-btn">Audio</button>
         </div>
       </div>
     </div>
@@ -648,6 +674,25 @@
           <button class="menu-btn" id="btn-resume">Resume</button>
           <button class="menu-btn" id="btn-restart">Restart</button>
           <button class="menu-btn" id="btn-quit">Quit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Audio settings overlay -->
+    <div class="overlay hidden" id="audio-overlay">
+      <div class="overlay-content">
+        <h2>AUDIO</h2>
+        <div class="menu-buttons">
+          <button class="menu-btn audio-toggle" id="btn-mute-all">
+            Mute All
+          </button>
+          <button class="menu-btn audio-toggle" id="btn-mute-music">
+            Mute Music
+          </button>
+          <button class="menu-btn audio-toggle" id="btn-mute-sfx">
+            Mute SFX
+          </button>
+          <button class="menu-btn" id="btn-audio-back">Back</button>
         </div>
       </div>
     </div>
@@ -781,7 +826,19 @@
         const AUDIO_VOLUME = 0.12;
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         const SFX_VOLUME = isMobile ? 0.55 : 0.15;
-        let muted = localStorage.getItem("tetris-muted") === "true";
+        // Migrate old single muted state to new granular states
+        let muteAll = localStorage.getItem("tetris-mute-all") === "true";
+        let muteMusic = localStorage.getItem("tetris-mute-music") === "true";
+        let muteSfx = localStorage.getItem("tetris-mute-sfx") === "true";
+        // Migrate from old single muted key
+        if (
+          localStorage.getItem("tetris-muted") === "true" &&
+          !localStorage.getItem("tetris-mute-all")
+        ) {
+          muteAll = true;
+          localStorage.setItem("tetris-mute-all", "true");
+        }
+        localStorage.removeItem("tetris-muted");
 
         class GameAudio {
           constructor() {
@@ -802,7 +859,7 @@
             try {
               this.ctx = new Ctx({ latencyHint: "interactive" });
               this.masterGain = this.ctx.createGain();
-              this.masterGain.gain.value = muted ? 0 : SFX_VOLUME;
+              this.masterGain.gain.value = muteAll || muteSfx ? 0 : SFX_VOLUME;
               this.masterGain.connect(this.ctx.destination);
             } catch (e) {}
 
@@ -925,17 +982,16 @@
         gameAudio.loadBuffer("lineClear", "assets/UMViM2tHrOk.mp3");
 
         function applyMute() {
-          audioEl.muted = muted;
-          audioEl.volume = muted ? 0 : AUDIO_VOLUME;
-          muteBtn.textContent = muted ? "Muted" : "Mute";
-          if (muted) {
-            muteBtn.classList.add("muted");
-          } else {
-            muteBtn.classList.remove("muted");
-          }
+          const musicMuted = muteAll || muteMusic;
+          const sfxMuted = muteAll || muteSfx;
+          audioEl.muted = musicMuted;
+          audioEl.volume = musicMuted ? 0 : AUDIO_VOLUME;
+          muteBtn.textContent = "Audio";
           if (gameAudio && gameAudio.masterGain) {
-            gameAudio.masterGain.gain.value = muted ? 0 : SFX_VOLUME;
+            gameAudio.masterGain.gain.value = sfxMuted ? 0 : SFX_VOLUME;
           }
+          // Update audio menu button labels
+          updateAudioMenuLabels();
         }
 
         function startAudio() {
@@ -953,21 +1009,129 @@
         }
 
         function playLineClearSound() {
-          if (!muted) {
+          if (!muteAll && !muteSfx) {
             gameAudio.play("lineClear");
           }
         }
 
-        function toggleMute() {
-          muted = !muted;
-          localStorage.setItem("tetris-muted", muted ? "true" : "false");
+        function saveMuteState() {
+          localStorage.setItem("tetris-mute-all", muteAll ? "true" : "false");
+          localStorage.setItem(
+            "tetris-mute-music",
+            muteMusic ? "true" : "false",
+          );
+          localStorage.setItem("tetris-mute-sfx", muteSfx ? "true" : "false");
           applyMute();
           startAudio();
         }
 
+        // Audio settings overlay
+        const audioOverlay = document.getElementById("audio-overlay");
+        const btnMuteAll = document.getElementById("btn-mute-all");
+        const btnMuteMusic = document.getElementById("btn-mute-music");
+        const btnMuteSfx = document.getElementById("btn-mute-sfx");
+        const btnAudioBack = document.getElementById("btn-audio-back");
+        const audioMenuBtns = [
+          btnMuteAll,
+          btnMuteMusic,
+          btnMuteSfx,
+          btnAudioBack,
+        ];
+        let audioMenuIdx = 0;
+        let audioMenuOpen = false;
+        let wasPausedBeforeAudio = false;
+
+        function updateAudioMenuLabels() {
+          if (btnMuteAll) {
+            btnMuteAll.textContent = muteAll ? "Unmute All" : "Mute All";
+            btnMuteAll.classList.toggle("active", muteAll);
+          }
+          if (btnMuteMusic) {
+            btnMuteMusic.textContent = muteMusic
+              ? "Unmute Music"
+              : "Mute Music";
+            btnMuteMusic.classList.toggle("active", muteMusic);
+          }
+          if (btnMuteSfx) {
+            btnMuteSfx.textContent = muteSfx ? "Unmute SFX" : "Mute SFX";
+            btnMuteSfx.classList.toggle("active", muteSfx);
+          }
+        }
+
+        function highlightAudioBtn() {
+          for (let i = 0; i < audioMenuBtns.length; i++)
+            audioMenuBtns[i].classList.toggle("selected", i === audioMenuIdx);
+        }
+
+        function openAudioMenu() {
+          if (audioMenuOpen) return;
+          audioMenuOpen = true;
+          wasPausedBeforeAudio = paused;
+          if (started && !gameOver && !paused) {
+            paused = true;
+          }
+          audioMenuIdx = 0;
+          updateAudioMenuLabels();
+          highlightAudioBtn();
+          pauseOverlay.classList.add("hidden");
+          audioOverlay.classList.remove("hidden");
+        }
+
+        function closeAudioMenu() {
+          if (!audioMenuOpen) return;
+          audioMenuOpen = false;
+          audioOverlay.classList.add("hidden");
+          if (started && !gameOver) {
+            if (wasPausedBeforeAudio) {
+              // Return to pause menu
+              pauseMenuIdx = 0;
+              highlightPauseBtn();
+              pauseOverlay.classList.remove("hidden");
+            } else {
+              paused = false;
+              lastTime = performance.now();
+            }
+          }
+        }
+
+        function toggleAudioOption(idx) {
+          if (idx === 0) {
+            muteAll = !muteAll;
+          } else if (idx === 1) {
+            muteMusic = !muteMusic;
+          } else if (idx === 2) {
+            muteSfx = !muteSfx;
+          } else if (idx === 3) {
+            closeAudioMenu();
+            return;
+          }
+          saveMuteState();
+        }
+
+        btnMuteAll.addEventListener("click", () => {
+          btnMuteAll.blur();
+          toggleAudioOption(0);
+        });
+        btnMuteMusic.addEventListener("click", () => {
+          btnMuteMusic.blur();
+          toggleAudioOption(1);
+        });
+        btnMuteSfx.addEventListener("click", () => {
+          btnMuteSfx.blur();
+          toggleAudioOption(2);
+        });
+        btnAudioBack.addEventListener("click", () => {
+          btnAudioBack.blur();
+          closeAudioMenu();
+        });
+
         muteBtn.addEventListener("click", () => {
           muteBtn.blur();
-          toggleMute();
+          if (audioMenuOpen) {
+            closeAudioMenu();
+          } else {
+            openAudioMenu();
+          }
         });
 
         const pauseBtn = document.getElementById("pause-btn");
@@ -1912,10 +2076,36 @@
 
         // ─── Input ───
         document.addEventListener("keydown", (e) => {
-          // Allow mute toggle in any state
+          // Allow audio menu toggle in any state
           if (e.code === "KeyM") {
             e.preventDefault();
-            toggleMute();
+            if (audioMenuOpen) {
+              closeAudioMenu();
+            } else {
+              openAudioMenu();
+            }
+            return;
+          }
+
+          // Handle audio menu keyboard navigation
+          if (audioMenuOpen) {
+            if (e.code === "ArrowUp" || e.code === "KeyW") {
+              e.preventDefault();
+              audioMenuIdx =
+                (audioMenuIdx - 1 + audioMenuBtns.length) %
+                audioMenuBtns.length;
+              highlightAudioBtn();
+            } else if (e.code === "ArrowDown" || e.code === "KeyS") {
+              e.preventDefault();
+              audioMenuIdx = (audioMenuIdx + 1) % audioMenuBtns.length;
+              highlightAudioBtn();
+            } else if (e.code === "Enter" || e.code === "Space") {
+              e.preventDefault();
+              toggleAudioOption(audioMenuIdx);
+            } else if (e.code === "Escape") {
+              e.preventDefault();
+              closeAudioMenu();
+            }
             return;
           }
 
@@ -2426,6 +2616,8 @@
           cancelAnimationFrame(rafId);
           pauseOverlay.classList.add("hidden");
           gameoverOverlay.classList.add("hidden");
+          audioOverlay.classList.add("hidden");
+          audioMenuOpen = false;
           startOverlay.classList.remove("hidden");
           ctx.drawImage(bgCanvas, 0, 0);
           drawPreview(nctx, nextCanvas, null);
@@ -2554,6 +2746,8 @@
           startOverlay.classList.add("hidden");
           gameoverOverlay.classList.add("hidden");
           pauseOverlay.classList.add("hidden");
+          audioOverlay.classList.add("hidden");
+          audioMenuOpen = false;
 
           applyMute();
           startAudio();
@@ -2573,7 +2767,7 @@
               togglePause();
             }
           } else {
-            if (!muted && audioStarted) {
+            if (!(muteAll || muteMusic) && audioStarted) {
               audioEl.play().catch(() => {});
             }
           }

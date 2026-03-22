@@ -28,7 +28,7 @@ The problem was that there was no version that fit how I wanted to play. Mobile 
 - Soft drop and hard drop scoring
 - Pause menu with resume, restart, and quit options
 - Line clear flash animation with sound effect
-- Background music with mute toggle (state persisted)
+- Audio settings menu with independent mute for music and SFX (state persisted)
 - iOS safe area support (Dynamic Island, notch, home indicator)
 - Offline support via Service Worker (works without internet after first visit)
 - Installable as a PWA (add to home screen on iOS/Android for app-like experience)
@@ -45,7 +45,7 @@ The problem was that there was no version that fit how I wanted to play. Mobile 
 | Rotate CW  | `↑` `W` `X`        |
 | Rotate CCW | `Z`                |
 | Hold       | `C` or `LShift`    |
-| Mute       | `M`                |
+| Audio      | `M`                |
 | Pause      | `Esc` or `P`       |
 
 ### Mobile (Touch)
@@ -97,7 +97,7 @@ Based on all of this, the speed curve here caps gravity at 33ms per row (similar
 - Uses Super Rotation System (SRS) style wall kicks for piece rotation
 - Velocity-based touch gesture detection for reliable flick vs drag distinction
 - Level-based timing system for gravity speed and lock delay
-- High scores and mute state persisted with `localStorage`
+- High scores and audio settings persisted with `localStorage`
 - To push updates to offline/PWA users, run `python3 cli.py -d` which bumps `CACHE_NAME` in `sw.js`, stages changes, and commits/pushes in one step
 - Assets (icons, audio) live in the `assets/` directory
 - Background music source [NmCCQxVBfyM](https://www.youtube.com/watch?v=NmCCQxVBfyM)
