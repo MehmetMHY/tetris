@@ -518,9 +518,9 @@
         background: #2a2a4e;
         color: #fff;
         border: 2px solid #555;
-        border-radius: 6px;
-        padding: 6px 14px;
-        font-size: 20px;
+        border-radius: 5px;
+        padding: 5px 11px;
+        font-size: 16px;
         font-family: inherit;
         cursor: pointer;
         transition:
@@ -800,7 +800,7 @@
             try {
               this.ctx = new Ctx({ latencyHint: 'interactive' });
               this.masterGain = this.ctx.createGain();
-              this.masterGain.gain.value = AUDIO_VOLUME;
+              this.masterGain.gain.value = muted ? 0 : audioEl.volume;
               this.masterGain.connect(this.ctx.destination);
             } catch(e) {}
 
@@ -918,7 +918,7 @@
             muteBtn.classList.remove("muted");
           }
           if (gameAudio && gameAudio.masterGain) {
-            gameAudio.masterGain.gain.value = muted ? 0 : AUDIO_VOLUME;
+            gameAudio.masterGain.gain.value = muted ? 0 : audioEl.volume;
           }
         }
 
