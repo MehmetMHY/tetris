@@ -163,7 +163,7 @@
           touch-action: none;
           image-rendering: crisp-edges;
           image-rendering: pixelated;
-          will-change: contents;
+          will-change: transform;
         }
 
         /* Hide desktop-only items and Level */
@@ -1695,23 +1695,27 @@
 
         // Ghost Y cache — invalidated when piece moves/rotates
         let cachedGhostY = 0;
-        let ghostCacheKey = ""; // "type,rot,x,y"
+        let ghostCacheType = "";
+        let ghostCacheRot = -1;
+        let ghostCacheX = -1;
+        let ghostCacheY = -1;
 
         function ghostY() {
-          const key =
-            currentType +
-            "," +
-            currentRotation +
-            "," +
-            currentX +
-            "," +
-            currentY;
-          if (key === ghostCacheKey) return cachedGhostY;
+          if (
+            currentType === ghostCacheType &&
+            currentRotation === ghostCacheRot &&
+            currentX === ghostCacheX &&
+            currentY === ghostCacheY
+          )
+            return cachedGhostY;
           const shape = getShape(currentType, currentRotation);
           let gy = currentY;
           while (!collides(shape, currentX, gy + 1)) gy++;
           cachedGhostY = gy;
-          ghostCacheKey = key;
+          ghostCacheType = currentType;
+          ghostCacheRot = currentRotation;
+          ghostCacheX = currentX;
+          ghostCacheY = currentY;
           return gy;
         }
 
@@ -1899,33 +1903,35 @@
         let isShowingBest = false;
         let scoreTimeout = null;
 
-        // Track previous DOM values to skip redundant writes
-        let prevScoreText = "0";
-        let prevLevelText = "1";
-        let prevSpeedText = "";
-        let prevLinesText = "0";
+        // Track previous numeric values to skip redundant DOM writes
+        let prevScoreVal = 0;
+        let prevLevelVal = 1;
+        let prevSpeedVal = 0;
+        let prevLinesVal = 0;
+        let prevShowingBest = false;
 
         function updateUI() {
           const displayScore = isShowingBest ? highScore : score;
-          const sText = "" + displayScore;
-          if (sText !== prevScoreText) {
-            scoreEl.textContent = sText;
-            prevScoreText = sText;
+          if (
+            displayScore !== prevScoreVal ||
+            isShowingBest !== prevShowingBest
+          ) {
+            scoreEl.textContent = displayScore;
+            prevScoreVal = displayScore;
+            prevShowingBest = isShowingBest;
           }
-          const lText = "" + level;
-          if (lText !== prevLevelText) {
-            levelEl.textContent = lText;
-            prevLevelText = lText;
+          if (level !== prevLevelVal) {
+            levelEl.textContent = level;
+            prevLevelVal = level;
           }
-          const spText = "" + getSpeed(level);
-          if (spText !== prevSpeedText) {
-            speedEl.textContent = spText;
-            prevSpeedText = spText;
+          const spd = getSpeed(level);
+          if (spd !== prevSpeedVal) {
+            speedEl.textContent = spd;
+            prevSpeedVal = spd;
           }
-          const liText = "" + lines;
-          if (liText !== prevLinesText) {
-            linesEl.textContent = liText;
-            prevLinesText = liText;
+          if (lines !== prevLinesVal) {
+            linesEl.textContent = lines;
+            prevLinesVal = lines;
           }
           if (score > highScore) {
             highScore = score;
@@ -2274,8 +2280,9 @@
 
             // ── UNDECIDED: wait for enough movement to classify ──
             if (touchPhase === "UNDECIDED") {
-              const dist = Math.sqrt(totalDX * totalDX + totalDY * totalDY);
-              if (dist < CLASSIFY_DIST) return;
+              // Compare squared distance to avoid Math.sqrt on every touchmove
+              const distSq = totalDX * totalDX + totalDY * totalDY;
+              if (distSq < CLASSIFY_DIST * CLASSIFY_DIST) return;
 
               // Classify: use angle. Vertical gets a generous cone (60°)
               // to prevent fast downward swipes from being classified as horizontal
@@ -2569,8 +2576,11 @@
             return;
           }
 
-          const delta = time - lastTime;
+          const rawDelta = time - lastTime;
           lastTime = time;
+          // Clamp delta to ~4 frames (~67ms at 60fps) to prevent post-hitch
+          // catch-up that causes pieces to teleport multiple rows at once
+          const delta = Math.min(rawDelta, 67);
 
           dropTimer += delta;
 
@@ -2598,8 +2608,9 @@
             ? Math.min(50, getSpeed(level))
             : getSpeed(level);
 
-          // Cap accumulated time to prevent massive catch-up after frame hitches
-          dropTimer = Math.min(dropTimer, dropInterval * ROWS);
+          // Cap accumulated time to prevent massive catch-up after frame hitches.
+          // Limit to 3 rows worth — enough for smooth motion, prevents teleporting.
+          dropTimer = Math.min(dropTimer, dropInterval * 3);
 
           // Gravity catch-up: move multiple rows if needed for consistent drop speed
           while (dropTimer >= dropInterval && !onGround) {
