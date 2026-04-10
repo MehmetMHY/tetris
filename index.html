@@ -1556,6 +1556,11 @@
         let bag;
         let dropTimer, lastTime;
         let lockDelay, lockTimer, lockMoves;
+        // Hard cap on how long a piece can sit on the ground before force-locking.
+        // Prevents indefinite stalling via DAS + soft-drop combos.
+        const GROUND_LOCK_MAX = 8000;
+        const GROUND_FLICKER_START = 6000;
+        let groundTime = 0;
         let animatingLines;
         let flashCounter = 0;
         let rafId;
@@ -1668,6 +1673,7 @@
           currentY = -1;
           lockTimer = 0;
           lockMoves = 0;
+          groundTime = 0;
           dropTimer = 0;
 
           if (collides(current, currentX, currentY)) {
@@ -1806,6 +1812,7 @@
             currentY = -1;
             lockTimer = 0;
             lockMoves = 0;
+            groundTime = 0;
             dropTimer = 0;
           }
           drawHold();
@@ -1842,6 +1849,18 @@
 
           if (gameOver || !currentType) return;
 
+          // Flicker warning: when a piece has been on the ground near the
+          // force-lock cap, gently pulse it so the player knows it's about
+          // to lock. On-phase is longer than off-phase so the piece stays
+          // visible most of the time.
+          let showPiece = true;
+          if (groundTime >= GROUND_FLICKER_START) {
+            const onMs = 400;
+            const offMs = 200;
+            const phase = (groundTime - GROUND_FLICKER_START) % (onMs + offMs);
+            showPiece = phase < onMs;
+          }
+
           // Ghost + current piece (single pass)
           const gy = ghostY();
           const shape = getShape(currentType, currentRotation);
@@ -1854,8 +1873,10 @@
                   const gpy = gy + r;
                   if (gpy >= 0) drawBlock(ctx, currentX + c, gpy, row[c], true);
                 }
-                const py = currentY + r;
-                if (py >= 0) drawBlock(ctx, currentX + c, py, row[c]);
+                if (showPiece) {
+                  const py = currentY + r;
+                  if (py >= 0) drawBlock(ctx, currentX + c, py, row[c]);
+                }
               }
             }
           }
@@ -2588,20 +2609,24 @@
           const shape = getShape(currentType, currentRotation);
           let onGround = collides(shape, currentX, currentY + 1);
 
-          // Lock delay scaled by level
+          // Lock delay scaled by level.
           // While soft-dropping, pause lock timer so the player gets the
-          // full lock delay window to slide after releasing
+          // full lock delay window to slide after releasing — but enforce
+          // a hard cap (GROUND_LOCK_MAX) on total ground time so holding
+          // soft-drop + DAS can't stall the piece indefinitely.
           const lockDelay = getLockDelay(level);
           if (onGround) {
+            groundTime += delta;
             if (!keys["down"]) {
               lockTimer += delta;
             }
-            if (lockTimer >= lockDelay) {
+            if (lockTimer >= lockDelay || groundTime >= GROUND_LOCK_MAX) {
               lockPiece();
               dropTimer = 0;
             }
           } else {
             lockTimer = 0;
+            groundTime = 0;
           }
 
           const dropInterval = keys["down"]
@@ -2635,7 +2660,10 @@
             currentY !== prevPieceY ||
             currentRotation !== prevPieceRot ||
             currentType !== prevPieceType;
-          if (boardDirty || pieceChanged) {
+          // Force redraws while the piece is in the flicker warning window
+          // so the flicker animation actually updates.
+          const flickering = groundTime >= GROUND_FLICKER_START;
+          if (boardDirty || pieceChanged || flickering) {
             prevPieceX = currentX;
             prevPieceY = currentY;
             prevPieceRot = currentRotation;
@@ -2661,6 +2689,7 @@
           dropTimer = 0;
           lockTimer = 0;
           lockMoves = 0;
+          groundTime = 0;
           animatingLines = null;
           lastTime = performance.now();
 
