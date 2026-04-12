@@ -1,4 +1,4 @@
-const CACHE_NAME = "tetris-v34";
+const CACHE_NAME = "tetris-v35";
 const ASSETS = [
   "./",
   "./index.html",
@@ -13,6 +13,7 @@ const ASSETS = [
   "./assets/android-chrome-192x192.png",
   "./assets/android-chrome-512x512.png",
   "./assets/favicon.ico",
+  "./assets/thumbnail.png",
 ];
 
 self.addEventListener("install", (e) => {
