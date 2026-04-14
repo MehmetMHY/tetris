@@ -26,8 +26,8 @@ The problem was that there was no version that fit how I wanted to play. Mobile 
 - Level-based speed curve with dynamic lock delay
 - Score, lines, level, and high score tracking persisted to local storage
 - Soft drop and hard drop scoring
-- In-game menu with resume, restart, quit, mute music/SFX, and source code link
-- Line clear flash animation with sound effect
+- In-game menu with resume, restart, quit, and options to toggle music, SFX, and visual effects
+- Line clear particle animations, screen shake, and sound effects
 - iOS safe area support (Dynamic Island, notch, home indicator)
 - Offline support via Service Worker (works without internet after first visit)
 - Installable as a PWA (add to home screen on iOS/Android for app-like experience)
