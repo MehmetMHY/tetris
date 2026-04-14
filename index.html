@@ -925,7 +925,7 @@
         let muteMusic = localStorage.getItem("tetris-mute-music") === "true";
         let muteSfx = localStorage.getItem("tetris-mute-sfx") === "true";
         let visualEffects =
-          localStorage.getItem("tetris-visual-effects") !== "false";
+          localStorage.getItem("tetris-visual-effects") === "true"; // Default to false
 
         // Migrate from old mute keys
         if (
