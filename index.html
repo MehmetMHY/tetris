@@ -511,6 +511,35 @@
         }
       }
 
+      @keyframes slamShake {
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        15% {
+          transform: translate(-3px, 2px);
+        }
+        30% {
+          transform: translate(3px, -2px);
+        }
+        45% {
+          transform: translate(-2px, -2px);
+        }
+        60% {
+          transform: translate(2px, 2px);
+        }
+        75% {
+          transform: translate(-2px, 1px);
+        }
+        90% {
+          transform: translate(1px, -1px);
+        }
+      }
+
+      .game-container.slam-shake {
+        animation: slamShake 0.3s ease-out;
+      }
+
       .menu-buttons {
         display: flex;
         flex-direction: column;
@@ -1804,6 +1833,9 @@
           for (const r of full) {
             spawnParticles(r, [...board[r]]);
           }
+          if (hardDropLockPending && full.length === 4 && visualEffects) {
+            triggerSlamShake();
+          }
 
           // Process board immediately — no input blocking
           full.sort((a, b) => b - a);
@@ -1924,7 +1956,18 @@
             dropped++;
           }
           score += dropped * HARD_DROP_SCORE;
+          hardDropLockPending = true;
           lockPiece();
+          hardDropLockPending = false;
+        }
+
+        let hardDropLockPending = false;
+        function triggerSlamShake() {
+          const el = document.querySelector(".game-container");
+          if (!el) return;
+          el.classList.remove("slam-shake");
+          void el.offsetWidth;
+          el.classList.add("slam-shake");
         }
 
         function rotate(dir) {
