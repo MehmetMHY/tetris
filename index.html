@@ -1739,6 +1739,7 @@
         let current, currentX, currentY, currentRotation, currentType;
         let nextType, holdType, holdUsed;
         let bag;
+        let pieceSerial = 0;
         let dropTimer, lastTime;
         let lockDelay, lockTimer, lockMoves;
         // Hard cap on how long a piece can sit on the ground before force-locking.
@@ -1858,6 +1859,7 @@
         }
 
         function spawn() {
+          pieceSerial++;
           currentType = nextType;
           nextType = nextPiece();
           currentRotation = 0;
@@ -2007,6 +2009,7 @@
             holdType = currentType;
             spawn();
           } else {
+            pieceSerial++;
             const tmp = holdType;
             holdType = currentType;
             currentType = tmp;
@@ -2352,7 +2355,9 @@
         //   3. HORIZONTAL → VERTICAL transition is allowed (L-shape move):
         //      when the user was sliding horizontally and starts moving
         //      downward fast, we snapshot X and freeze it.
-        //   4. Velocity is computed from a rolling window, not just
+        //   4. Horizontal drag maps finger distance to board cells so the
+        //      piece stays under control instead of outrunning the finger.
+        //   5. Velocity is computed from a rolling window, not just
         //      start-to-end, for accurate intent detection.
 
         // Cache cellPx to avoid getBoundingClientRect() reflow on every touchmove
@@ -2373,7 +2378,9 @@
           touchStartY = 0;
         let touchStartTime = 0;
         let touchPhase = "IDLE"; // IDLE | UNDECIDED | HORIZONTAL | VERTICAL
-        let hAnchorX = 0; // client X anchor for cell-based horizontal moves
+        let hOriginX = 0; // client X origin for finger-to-cell horizontal tracking
+        let hOriginPieceX = 0;
+        let hOriginPieceSerial = 0;
         let vAnchorY = 0; // client Y anchor for soft drop distance (set on VERTICAL entry)
         let isSoftDropping = false;
         let hasMoved = false;
@@ -2388,7 +2395,7 @@
 
         // Tuning constants
         const CLASSIFY_DIST = 8; // px before we classify gesture
-        const H_CELL_RATIO = 0.59; // fraction of cell width per horizontal move
+        const AXIS_DOMINANCE = 1.15; // avoid classifying small diagonal thumb drift too early
         const SOFT_DROP_DIST = 1.0; // cells of downward drag to start soft drop
         const FLICK_VEL_THRESH = 1.2; // px/ms vertical velocity for hard drop
         const FLICK_MIN_DIST = 50; // min px of total downward travel for flick
@@ -2459,12 +2466,33 @@
           return velResult;
         }
 
-        function enterVerticalPhase(clientY) {
+        function resetHorizontalTracking(clientX) {
+          hOriginX = clientX;
+          hOriginPieceX = currentX;
+          hOriginPieceSerial = pieceSerial;
+        }
+
+        function applyHorizontalDrag(clientX) {
+          if (hOriginPieceSerial !== pieceSerial) {
+            resetHorizontalTracking(clientX);
+            return;
+          }
+
+          const targetX =
+            hOriginPieceX + Math.round((clientX - hOriginX) / cachedCellPx);
+          while (currentX !== targetX) {
+            const moved = targetX > currentX ? moveRight() : moveLeft();
+            if (!moved) break;
+          }
+        }
+
+        function enterVerticalPhase(clientX, clientY) {
           touchPhase = "VERTICAL";
           // Set vAnchorY to where the vertical phase actually began, NOT
           // where the entire touch started. Prevents accidental soft drop
           // when transitioning from HORIZONTAL (finger already drifted down).
           vAnchorY = clientY;
+          resetHorizontalTracking(clientX);
         }
 
         document.addEventListener(
@@ -2479,7 +2507,7 @@
             touchStartY = t.clientY;
             touchStartTime = performance.now();
             touchPhase = "UNDECIDED";
-            hAnchorX = t.clientX;
+            resetHorizontalTracking(t.clientX);
             vAnchorY = t.clientY;
             isSoftDropping = false;
             hasMoved = false;
@@ -2514,43 +2542,35 @@
               const distSq = totalDX * totalDX + totalDY * totalDY;
               if (distSq < CLASSIFY_DIST * CLASSIFY_DIST) return;
 
-              // Classify: use angle. Vertical gets a generous cone (60°)
-              // to prevent fast downward swipes from being classified as horizontal
-              const absAngle = Math.abs(
-                (Math.atan2(totalDY, totalDX) * 180) / Math.PI,
-              );
-              // absAngle near 90 = vertical, near 0/180 = horizontal
-              const isVertical = absAngle > 30 && absAngle < 150;
+              const absDX = Math.abs(totalDX);
+              const absDY = Math.abs(totalDY);
 
-              if (isVertical) {
-                enterVerticalPhase(y);
+              if (absDX > absDY * AXIS_DOMINANCE) {
+                touchPhase = "HORIZONTAL";
+                resetHorizontalTracking(touchStartX);
+                hasMoved = true;
+              } else if (absDY > absDX * AXIS_DOMINANCE) {
+                enterVerticalPhase(x, y);
                 hasMoved = true;
               } else {
-                touchPhase = "HORIZONTAL";
-                hAnchorX = touchStartX;
+                // Ambiguous diagonal movement is common with thumbs. Wait for
+                // a little more travel instead of freezing the wrong axis.
+                const commitDist = cellPx * 0.55;
+                if (distSq < commitDist * commitDist) return;
+
+                if (absDX >= absDY) {
+                  touchPhase = "HORIZONTAL";
+                  resetHorizontalTracking(touchStartX);
+                } else {
+                  enterVerticalPhase(x, y);
+                }
                 hasMoved = true;
               }
             }
 
-            // ── HORIZONTAL phase: cell-by-cell sliding ──
+            // ── HORIZONTAL phase: finger-to-cell sliding ──
             if (touchPhase === "HORIZONTAL") {
-              const hThresh = cellPx * H_CELL_RATIO;
-              while (x - hAnchorX >= hThresh) {
-                if (moveRight()) {
-                  hAnchorX += hThresh;
-                } else {
-                  hAnchorX = x;
-                  break;
-                }
-              }
-              while (hAnchorX - x >= hThresh) {
-                if (moveLeft()) {
-                  hAnchorX -= hThresh;
-                } else {
-                  hAnchorX = x;
-                  break;
-                }
-              }
+              applyHorizontalDrag(x);
 
               // Check for H→V transition: if vertical velocity is now high,
               // the user is transitioning from a slide into a drop (L-shape).
@@ -2559,7 +2579,7 @@
                 vel.vy > H_TO_V_VEL &&
                 Math.abs(vel.vy) > Math.abs(vel.vx) * 1.5
               ) {
-                enterVerticalPhase(y);
+                enterVerticalPhase(x, y);
               }
             }
 
@@ -2571,29 +2591,13 @@
               if (onGround) {
                 // Piece is on ground during lock delay — allow horizontal
                 // sliding so the player can reposition before it locks.
-                const hThresh = cellPx * H_CELL_RATIO;
-                while (x - hAnchorX >= hThresh) {
-                  if (moveRight()) {
-                    hAnchorX += hThresh;
-                  } else {
-                    hAnchorX = x;
-                    break;
-                  }
-                }
-                while (hAnchorX - x >= hThresh) {
-                  if (moveLeft()) {
-                    hAnchorX -= hThresh;
-                  } else {
-                    hAnchorX = x;
-                    break;
-                  }
-                }
+                applyHorizontalDrag(x);
               } else {
                 // Still falling — horizontal position is frozen. Don't force
                 // currentX to a stale frozenX (which causes teleporting if a
-                // new piece spawned mid-touch). Just track hAnchorX so
-                // horizontal sliding is ready when the piece lands.
-                hAnchorX = x;
+                // new piece spawned mid-touch). Just track the current finger
+                // position so sliding is ready when the piece lands.
+                resetHorizontalTracking(x);
               }
 
               // Soft drop activation — measured from vAnchorY (where the
