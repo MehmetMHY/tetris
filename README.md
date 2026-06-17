@@ -73,19 +73,6 @@ To bump the Service Worker cache version, commit, and push:
 python3 cli.py -d
 ```
 
-## Built With
-
-- [Claude Code CLI](https://code.claude.com/docs/en/overview) _(writing code)_
-- [Gemini CLI](https://github.com/google-gemini/gemini-cli) _(writing code)_
-- [Cha CLI](https://github.com/MehmetMHY/ch) _(research, CLI scripts, README)_
-- [xAI Grok Web App](https://grok.com/) _(logos/icons)_
-- [Perplexity](https://www.perplexity.ai/) _(research/bugs)_
-- [Google Search](https://www.google.com/) _(finding SVGs and other assets)_
-- [YouTube](https://www.youtube.com/) + [yt-dlp](https://github.com/yt-dlp/yt-dlp) _(sourcing audio clips)_
-- [FFmpeg](https://www.ffmpeg.org/) _(editing audio files)_
-- [macOS Preview](<https://en.wikipedia.org/wiki/Preview_(Apple)>) _(editing logos/images)_
-- [Python](https://www.python.org/) _(misc scripting)_
-
 ## Speed Tuning & Game Theory
 
 The speed curve and lock delay in this version were tuned using research into how classic and modern Tetris games handle difficulty progression. In the original [NES Tetris](<https://en.wikipedia.org/wiki/Tetris_(NES_video_game)>), gravity reaches one row per frame at level 29, which became the famous ["kill screen"](https://tetris.wiki/Tetris_%28NES%29) where the game becomes effectively unplayable for most humans. That was not really a designed ending, it was more of a side effect of the hardware and how DAS (Delayed Auto Shift) was too slow to keep up with the drop speed. Willis Gibson proved this in 2024 when he [pushed past it and crashed the game at level 157](https://apnews.com/article/tetris-win-kill-screen-blue-scuti-willis-gibson-df9325c62d42292e854cadb54d8f4cb3).
