@@ -115,11 +115,7 @@ def cmd_deploy():
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="tetris project utility",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="examples:\n  python3 cli.py -r\n  python3 cli.py -d",
-    )
+    parser = argparse.ArgumentParser(description="tetris project utility")
     parser.add_argument(
         "-r",
         "--run",
