@@ -8,3 +8,5 @@ ch_*
 tmp_*
 *meme*
 *task*
+session-*.md
+session-*.sh
