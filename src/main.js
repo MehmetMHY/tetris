@@ -5,7 +5,10 @@ import { TouchInput } from "./input/touch.js";
 import { AudioManager } from "./platform/audio.js";
 import { Storage } from "./platform/storage.js";
 import { setupIOS } from "./platform/ios.js";
-import { setupVisibilityHandling, setupBlurHandling } from "./platform/lifecycle.js";
+import {
+  setupVisibilityHandling,
+  setupBlurHandling,
+} from "./platform/lifecycle.js";
 import { getDOMElements } from "./ui/dom.js";
 import { HUD } from "./ui/hud.js";
 import { OverlayManager } from "./ui/overlays.js";
@@ -196,12 +199,13 @@ const keyboard = new KeyboardInput({
   onStartGame: startGame,
   onChangeStartLevel: (delta) => levelPicker.changeStartLevel(delta),
   onTogglePause: () => overlays.togglePause(),
-  onQuitToTitle: () => overlays.quitToTitle(() => {
-    if (rafId) {
-      cancelAnimationFrame(rafId);
-      rafId = null;
-    }
-  }),
+  onQuitToTitle: () =>
+    overlays.quitToTitle(() => {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    }),
   onRestart: () => {
     dom.gameoverOverlay.classList.add("hidden");
     startGame();

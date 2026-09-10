@@ -174,8 +174,7 @@ export class GameEngine {
 
     // Capture row colors before mutation (for particle effects)
     const rowsData = full.map((r) => ({ row: r, colors: [...this.board[r]] }));
-    const isHardDropTetris =
-      this.hardDropLockPending && full.length === 4;
+    const isHardDropTetris = this.hardDropLockPending && full.length === 4;
 
     // Process board immediately — no input blocking
     full.sort((a, b) => b - a);
@@ -300,7 +299,9 @@ export class GameEngine {
     let kicks;
     if (this.currentType === "I") {
       kicks =
-        dir === 1 ? KICK_I[this.currentRotation] : KICK_I_CCW[this.currentRotation];
+        dir === 1
+          ? KICK_I[this.currentRotation]
+          : KICK_I_CCW[this.currentRotation];
     } else if (this.currentType === "O") {
       kicks = [[0, 0]];
     } else {

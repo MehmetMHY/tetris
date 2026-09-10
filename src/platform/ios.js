@@ -77,10 +77,7 @@ export function setupIOS() {
     document.body.removeChild(test);
     if (inset === 0) {
       if (window.screen.height >= 812) {
-        document.documentElement.style.setProperty(
-          "--ios-top-inset",
-          "50px",
-        );
+        document.documentElement.style.setProperty("--ios-top-inset", "50px");
         document.documentElement.style.setProperty(
           "--ios-bottom-inset",
           "34px",

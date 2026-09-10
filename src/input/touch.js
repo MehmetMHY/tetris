@@ -133,8 +133,10 @@ export class TouchInput {
       ((this.sampleHead - this.sampleCount + this.MAX_SAMPLES) %
         this.MAX_SAMPLES) *
       3;
-    const lastIdx = ((this.sampleHead - 1 + this.MAX_SAMPLES) % this.MAX_SAMPLES) * 3;
-    const dt = this.touchSampleBuf[lastIdx + 2] - this.touchSampleBuf[firstIdx + 2];
+    const lastIdx =
+      ((this.sampleHead - 1 + this.MAX_SAMPLES) % this.MAX_SAMPLES) * 3;
+    const dt =
+      this.touchSampleBuf[lastIdx + 2] - this.touchSampleBuf[firstIdx + 2];
     if (dt < 5) {
       this.velResult.vx = 0;
       this.velResult.vy = 0;
@@ -143,7 +145,8 @@ export class TouchInput {
     this.velResult.vx =
       (this.touchSampleBuf[lastIdx] - this.touchSampleBuf[firstIdx]) / dt;
     this.velResult.vy =
-      (this.touchSampleBuf[lastIdx + 1] - this.touchSampleBuf[firstIdx + 1]) / dt;
+      (this.touchSampleBuf[lastIdx + 1] - this.touchSampleBuf[firstIdx + 1]) /
+      dt;
     return this.velResult;
   }
 
@@ -162,9 +165,10 @@ export class TouchInput {
     const targetX =
       this.hOriginPieceX + Math.round((clientX - this.hOriginX) / cellPx);
     while (this.engine.currentX !== targetX) {
-      const moved = targetX > this.engine.currentX
-        ? this.engine.moveRight()
-        : this.engine.moveLeft();
+      const moved =
+        targetX > this.engine.currentX
+          ? this.engine.moveRight()
+          : this.engine.moveLeft();
       if (!moved) break;
     }
   }
@@ -176,7 +180,12 @@ export class TouchInput {
   }
 
   _onTouchStart(e) {
-    if (this.isUIElement(e) || !this.getIsStarted() || this.getIsPaused() || this.getIsGameOver())
+    if (
+      this.isUIElement(e) ||
+      !this.getIsStarted() ||
+      this.getIsPaused() ||
+      this.getIsGameOver()
+    )
       return;
     if (this.touchId !== null) return;
 
@@ -195,7 +204,8 @@ export class TouchInput {
   }
 
   _onTouchMove(e) {
-    if (!this.getIsStarted() || this.getIsPaused() || this.getIsGameOver()) return;
+    if (!this.getIsStarted() || this.getIsPaused() || this.getIsGameOver())
+      return;
     if (this.isUIElement(e)) return;
     e.preventDefault();
 
@@ -241,10 +251,7 @@ export class TouchInput {
       this.applyHorizontalDrag(x);
 
       const vel = this.getVelocity();
-      if (
-        vel.vy > H_TO_V_VEL &&
-        Math.abs(vel.vy) > Math.abs(vel.vx) * 1.5
-      ) {
+      if (vel.vy > H_TO_V_VEL && Math.abs(vel.vy) > Math.abs(vel.vx) * 1.5) {
         this.enterVerticalPhase(x, y);
       }
     }
@@ -290,7 +297,12 @@ export class TouchInput {
     this.keyboardSoftDrop(false);
     this.isSoftDropping = false;
 
-    if (this.isUIElement(e) || !this.getIsStarted() || this.getIsPaused() || this.getIsGameOver())
+    if (
+      this.isUIElement(e) ||
+      !this.getIsStarted() ||
+      this.getIsPaused() ||
+      this.getIsGameOver()
+    )
       return;
 
     const x = t.clientX;

@@ -1,4 +1,11 @@
-import { BLOCK, COLORS, GHOST_ALPHA, PREVIEW_BLOCK, COLS, ROWS } from "../config/constants.js";
+import {
+  BLOCK,
+  COLORS,
+  GHOST_ALPHA,
+  PREVIEW_BLOCK,
+  COLS,
+  ROWS,
+} from "../config/constants.js";
 
 /**
  * Pre-rendered block sprites for performance (1 drawImage vs 6 draw calls per block).

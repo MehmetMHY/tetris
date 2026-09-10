@@ -1,7 +1,14 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { GameEngine } from "../src/game/engine.js";
-import { COLS, ROWS, EMPTY, LINE_SCORES, GROUND_LOCK_MAX, HARD_DROP_SCORE } from "../src/config/constants.js";
+import {
+  COLS,
+  ROWS,
+  EMPTY,
+  LINE_SCORES,
+  GROUND_LOCK_MAX,
+  HARD_DROP_SCORE,
+} from "../src/config/constants.js";
 import { SHAPES, PIECE_NAMES, getShape } from "../src/config/pieces.js";
 import { getSpeed, getLockDelay } from "../src/config/timing.js";
 
@@ -413,7 +420,9 @@ describe("engine: line clearing", () => {
   });
 
   test("single line clear scores 100 * level", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     fillRows(engine, [ROWS - 1], 1, [4, 5]);
     const scoreBefore = engine.score;
@@ -421,22 +430,32 @@ describe("engine: line clearing", () => {
     engine.hardDrop();
     // O drops from y=0 to y=ROWS-2 (18 rows) → hard drop score = 36
     const dropScore = (ROWS - 2) * HARD_DROP_SCORE;
-    assert.equal(engine.score, scoreBefore + LINE_SCORES[1] * engine.level + dropScore);
+    assert.equal(
+      engine.score,
+      scoreBefore + LINE_SCORES[1] * engine.level + dropScore,
+    );
   });
 
   test("double line clear scores 300 * level", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     fillRows(engine, [ROWS - 1, ROWS - 2], 1, [4, 5]);
     const scoreBefore = engine.score;
     placePiece(engine, "O", 4, 0, 0);
     engine.hardDrop();
     const dropScore = (ROWS - 2) * HARD_DROP_SCORE;
-    assert.equal(engine.score, scoreBefore + LINE_SCORES[2] * engine.level + dropScore);
+    assert.equal(
+      engine.score,
+      scoreBefore + LINE_SCORES[2] * engine.level + dropScore,
+    );
   });
 
   test("triple line clear scores 500 * level", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     // Fill bottom 3 rows leaving column 5 empty for I piece vertical
     fillRows(engine, [ROWS - 1, ROWS - 2, ROWS - 3], 1, [5]);
@@ -446,22 +465,32 @@ describe("engine: line clearing", () => {
     engine.hardDrop();
     // I drops from y=0 to y=ROWS-4 (16 rows) → hard drop score = 32
     const dropScore = (ROWS - 4) * HARD_DROP_SCORE;
-    assert.equal(engine.score, scoreBefore + LINE_SCORES[3] * engine.level + dropScore);
+    assert.equal(
+      engine.score,
+      scoreBefore + LINE_SCORES[3] * engine.level + dropScore,
+    );
   });
 
   test("tetris (4 lines) scores 800 * level", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     fillRows(engine, [ROWS - 1, ROWS - 2, ROWS - 3, ROWS - 4], 1, [5]);
     const scoreBefore = engine.score;
     placePiece(engine, "I", 3, 0, 1);
     engine.hardDrop();
     const dropScore = (ROWS - 4) * HARD_DROP_SCORE;
-    assert.equal(engine.score, scoreBefore + LINE_SCORES[4] * engine.level + dropScore);
+    assert.equal(
+      engine.score,
+      scoreBefore + LINE_SCORES[4] * engine.level + dropScore,
+    );
   });
 
   test("line clear increments lines counter", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     fillRows(engine, [ROWS - 1], 1, [4, 5]);
     const linesBefore = engine.lines;
@@ -504,7 +533,9 @@ describe("engine: line clearing", () => {
   });
 
   test("cleared rows are replaced with empty rows at top", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     fillRows(engine, [ROWS - 1], 1, [4, 5]);
     placePiece(engine, "O", 4, 0, 0);
@@ -520,19 +551,25 @@ describe("engine: line clearing", () => {
 
 describe("engine: level progression", () => {
   test("level starts at startLevel", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(5);
     assert.equal(engine.level, 5);
   });
 
   test("lines start at (startLevel-1)*10", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(3);
     assert.equal(engine.lines, 20);
   });
 
   test("level increases every 10 lines", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     // Clear 10 single lines
     for (let i = 0; i < 10; i++) {
@@ -544,7 +581,9 @@ describe("engine: level progression", () => {
   });
 
   test("level does not change when no lines are cleared", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     engine.hardDrop();
     assert.equal(engine.level, 1);
@@ -555,7 +594,9 @@ describe("engine: level progression", () => {
 
 describe("engine: hold piece", () => {
   test("hold on first piece stores current and spawns next", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     const firstType = engine.currentType;
     const nextType = engine.nextType;
@@ -565,14 +606,18 @@ describe("engine: hold piece", () => {
   });
 
   test("hold sets holdUsed to true", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     engine.holdPiece();
     assert.equal(engine.holdUsed, true);
   });
 
   test("cannot hold twice in a row", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     engine.holdPiece();
     const typeAfterFirstHold = engine.currentType;
@@ -581,7 +626,9 @@ describe("engine: hold piece", () => {
   });
 
   test("hold is reset after piece locks", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     engine.holdPiece();
     assert.equal(engine.holdUsed, true);
@@ -590,7 +637,9 @@ describe("engine: hold piece", () => {
   });
 
   test("second hold swaps current with stored", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     const firstType = engine.currentType; // piece A
     engine.holdPiece(); // holdType = A, currentType = piece B
@@ -617,7 +666,9 @@ describe("engine: hold piece", () => {
 
 describe("engine: ghost piece", () => {
   test("ghostY returns the lowest Y without collision", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     const shape = getShape(engine.currentType, 0);
     let expectedY = engine.currentY;
@@ -628,7 +679,9 @@ describe("engine: ghost piece", () => {
   });
 
   test("ghostY is cached", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     const y1 = engine.ghostY();
     const y2 = engine.ghostY();
@@ -636,7 +689,9 @@ describe("engine: ghost piece", () => {
   });
 
   test("ghostY cache invalidates on movement", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     const y1 = engine.ghostY();
     engine.moveDown();
@@ -649,7 +704,9 @@ describe("engine: ghost piece", () => {
 
 describe("engine: game over", () => {
   test("triggerGameOver sets gameOver flag", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     engine.triggerGameOver();
     assert.equal(engine.gameOver, true);
@@ -671,7 +728,11 @@ describe("engine: game over", () => {
     let gameOverCalled = false;
     const engine = makeEngine({
       rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
-      hooks: { onGameOver: () => { gameOverCalled = true; } },
+      hooks: {
+        onGameOver: () => {
+          gameOverCalled = true;
+        },
+      },
     });
     engine.startGame(1);
     // Fill all rows except column 0 (no row is full → no line clearing)
@@ -688,7 +749,9 @@ describe("engine: game over", () => {
   });
 
   test("update does nothing when game is over", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     engine.gameOver = true;
     const y = engine.currentY;
@@ -701,7 +764,9 @@ describe("engine: game over", () => {
 
 describe("engine: update (game loop)", () => {
   test("gravity moves piece down at level speed", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     const yBefore = engine.currentY;
     const speed = getSpeed(1);
@@ -710,7 +775,9 @@ describe("engine: update (game loop)", () => {
   });
 
   test("gravity moves multiple rows with large delta (catch-up)", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     const yBefore = engine.currentY;
     const speed = getSpeed(1);
@@ -721,7 +788,9 @@ describe("engine: update (game loop)", () => {
   });
 
   test("soft drop uses min(50, speed) as drop interval", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     const yBefore = engine.currentY;
     const softDropInterval = Math.min(50, getSpeed(1)); // 50
@@ -730,7 +799,9 @@ describe("engine: update (game loop)", () => {
   });
 
   test("piece locks after lock delay on ground", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     // Move piece to ground
     while (engine.moveDown()) {}
@@ -741,7 +812,9 @@ describe("engine: update (game loop)", () => {
   });
 
   test("soft drop pauses lock timer but ground time still accumulates", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     while (engine.moveDown()) {}
     engine.update(100, true); // soft dropping
@@ -751,7 +824,9 @@ describe("engine: update (game loop)", () => {
   });
 
   test("ground lock cap force-locks after GROUND_LOCK_MAX", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     while (engine.moveDown()) {}
     const typeBefore = engine.currentType;
@@ -762,7 +837,9 @@ describe("engine: update (game loop)", () => {
   });
 
   test("update does nothing when paused", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     engine.paused = true;
     const y = engine.currentY;
@@ -787,13 +864,17 @@ describe("engine: update (game loop)", () => {
 
 describe("engine: lifecycle", () => {
   test("startGame sets started flag", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     assert.equal(engine.started, true);
   });
 
   test("startGame resets score to 0", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     engine.score = 999;
     engine.startGame(1);
@@ -801,7 +882,9 @@ describe("engine: lifecycle", () => {
   });
 
   test("startGame clears hold", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     engine.holdPiece();
     engine.startGame(1);
@@ -810,7 +893,9 @@ describe("engine: lifecycle", () => {
   });
 
   test("quitToTitle resets lifecycle flags", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     engine.quitToTitle();
     assert.equal(engine.started, false);
@@ -819,7 +904,9 @@ describe("engine: lifecycle", () => {
   });
 
   test("togglePause flips paused state", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     assert.equal(engine.paused, false);
     engine.togglePause();
@@ -829,7 +916,9 @@ describe("engine: lifecycle", () => {
   });
 
   test("resume sets paused to false", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     engine.togglePause();
     engine.resume();
@@ -841,7 +930,9 @@ describe("engine: lifecycle", () => {
 
 describe("engine: seven-bag integration", () => {
   test("consecutive pieces come from the bag", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     const pieces = [engine.currentType];
     for (let i = 0; i < 6; i++) {

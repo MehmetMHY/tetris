@@ -9,7 +9,7 @@ This is a dependency-free static browser Tetris game and PWA. The app is served 
 Primary files:
 
 - `index.html`: HTML structure and markup only (~245 lines). No inline CSS or JavaScript.
-- `styles.css`: all game CSS (~600 lines).
+- `styles/`: CSS split into 4 files — `base.css`, `layout.css`, `components.css`, `animations.css`.
 - `src/`: ES module source code, organized by subsystem.
 - `sw.js`: service worker cache list and cache version.
 - `site.webmanifest`: PWA metadata and install icons.
@@ -99,6 +99,7 @@ npm test
 ```
 
 Runs all unit tests using Node's built-in test runner. No dependencies required. Tests cover:
+
 - Constants, piece shapes, SRS kick tables
 - Speed curve, lock delay, DAS timing
 - Seven-bag randomizer (with deterministic RNG)
@@ -128,7 +129,7 @@ node --check src/cli.js
 - Keep the app dependency-free unless the user explicitly asks for a build system or library.
 - Prefer small, direct edits in the existing module structure. Each module has a single responsibility.
 - Preserve the current browser-first style: plain HTML, CSS, and vanilla JavaScript ES modules.
-- Use 2-space indentation in all files (`index.html`, `styles.css`, `sw.js`, `cli.js`, and all `src/*.js` files).
+- Use 2-space indentation in all files (`index.html`, `styles/*.css`, `sw.js`, `src/cli.js`, and all `src/**/*.js` files).
 - Follow existing naming: constants in `UPPER_CASE`, mutable game state in concise camelCase names.
 - Keep performance-sensitive rendering patterns intact: pre-rendered sprites, board cache, dirty redraw checks, and `requestAnimationFrame` loop.
 - The `GameEngine` class must remain pure (no DOM, no canvas, no browser APIs). All side effects go through hooks.
@@ -140,7 +141,7 @@ node --check src/cli.js
 ## Service Worker And PWA Notes
 
 - `sw.js` uses a cache-first strategy and a versioned `CACHE_NAME` like `tetris-v42`.
-- Every `.js` module file and `styles.css` must be listed in the `ASSETS` array in `sw.js`. If you add a new module, update `ASSETS`.
+- Every `.js` module file and CSS file must be listed in the `ASSETS` array in `sw.js`. If you add a new module or stylesheet, update `ASSETS`.
 - If a change needs to reach existing offline/PWA users, bump `CACHE_NAME` in `sw.js`.
 - Do not run `npm run deploy` unless the user explicitly asks to deploy. It is interactive and can stage, commit, and push changes.
 - `site.webmanifest` uses relative icon paths (`assets/...`) for GitHub Pages compatibility under `/tetris/`.

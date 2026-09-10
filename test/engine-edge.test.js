@@ -1,7 +1,14 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { GameEngine } from "../src/game/engine.js";
-import { COLS, ROWS, EMPTY, LINE_SCORES, GROUND_LOCK_MAX, GROUND_FLICKER_START } from "../src/config/constants.js";
+import {
+  COLS,
+  ROWS,
+  EMPTY,
+  LINE_SCORES,
+  GROUND_LOCK_MAX,
+  GROUND_FLICKER_START,
+} from "../src/config/constants.js";
 import { getShape } from "../src/config/pieces.js";
 import { getSpeed, getLockDelay } from "../src/config/timing.js";
 
@@ -44,7 +51,9 @@ function fillRows(engine, rows, color = 1, skipCols = []) {
 
 describe("engine: lock delay edge cases", () => {
   test("lock timer accumulates while on ground (not soft dropping)", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     while (engine.moveDown()) {}
     engine.update(100, false);
@@ -53,7 +62,9 @@ describe("engine: lock delay edge cases", () => {
   });
 
   test("movement resets lock timer but not ground time", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     while (engine.moveDown()) {}
     engine.update(200, false);
@@ -64,7 +75,9 @@ describe("engine: lock delay edge cases", () => {
   });
 
   test("lock moves are capped — after 15 moves, lock timer is NOT reset", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     while (engine.moveDown()) {}
     // Use up all 15 move resets
@@ -80,7 +93,9 @@ describe("engine: lock delay edge cases", () => {
   });
 
   test("ground lock cap force-locks even while not soft dropping", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     while (engine.moveDown()) {}
     // Keep moving to reset lock timer and prevent normal lock
@@ -98,7 +113,9 @@ describe("engine: lock delay edge cases", () => {
   });
 
   test("delta is clamped to 67ms in the update loop", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     const yBefore = engine.currentY;
     // Huge delta should be clamped — piece should not jump more than 3 rows
@@ -111,20 +128,26 @@ describe("engine: lock delay edge cases", () => {
 
 describe("engine: query methods", () => {
   test("isOnGround returns true when piece is at bottom", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     while (engine.moveDown()) {}
     assert.ok(engine.isOnGround());
   });
 
   test("isOnGround returns false when piece is falling", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     assert.ok(!engine.isOnGround());
   });
 
   test("isFlickering returns false below threshold", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     while (engine.moveDown()) {}
     engine.update(GROUND_FLICKER_START - 100, false);
@@ -132,7 +155,9 @@ describe("engine: query methods", () => {
   });
 
   test("isFlickering returns true at threshold", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     while (engine.moveDown()) {}
     // Use soft drop to pause lock timer while ground time accumulates
@@ -143,7 +168,9 @@ describe("engine: query methods", () => {
   });
 
   test("getSpeed returns the correct speed for current level", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     assert.equal(engine.getSpeed(), getSpeed(1));
     engine.level = 5;
@@ -151,7 +178,9 @@ describe("engine: query methods", () => {
   });
 
   test("getLockDelay returns the correct delay for current level", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     assert.equal(engine.getLockDelay(), getLockDelay(1, false));
   });
@@ -161,7 +190,9 @@ describe("engine: query methods", () => {
 
 describe("engine: multi-line clear sequences", () => {
   test("clearing 10 single lines levels up", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     for (let i = 0; i < 10; i++) {
       fillRows(engine, [ROWS - 1], 1, [4, 5]);
@@ -173,7 +204,9 @@ describe("engine: multi-line clear sequences", () => {
   });
 
   test("clearing a tetris (4 lines) scores more than 4 singles", () => {
-    const engine1 = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine1 = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine1.startGame(1);
     // 4 single line clears
     let score1 = 0;
@@ -184,7 +217,9 @@ describe("engine: multi-line clear sequences", () => {
       score1 = engine1.score;
     }
 
-    const engine2 = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine2 = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine2.startGame(1);
     fillRows(engine2, [ROWS - 1, ROWS - 2, ROWS - 3, ROWS - 4], 1, [5]);
     placePiece(engine2, "I", 3, 0, 1);
@@ -393,7 +428,9 @@ describe("engine: full game simulation", () => {
   });
 
   test("pause and resume does not advance game state", () => {
-    const engine = makeEngine({ rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6) });
+    const engine = makeEngine({
+      rng: makeSeqRng(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+    });
     engine.startGame(1);
     const y = engine.currentY;
     engine.togglePause();

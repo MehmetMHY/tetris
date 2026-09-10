@@ -143,12 +143,7 @@ export class Renderer {
           if (showPiece) {
             const py = this.engine.currentY + r;
             if (py >= 0)
-              this.drawBlock(
-                this.ctx,
-                this.engine.currentX + c,
-                py,
-                row[c],
-              );
+              this.drawBlock(this.ctx, this.engine.currentX + c, py, row[c]);
           }
         }
       }

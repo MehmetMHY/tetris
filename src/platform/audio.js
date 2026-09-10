@@ -45,10 +45,7 @@ export class GameAudio {
       await this.init();
       if (!this.ctx) return false;
 
-      if (
-        this.ctx.state === "suspended" ||
-        this.ctx.state === "interrupted"
-      ) {
+      if (this.ctx.state === "suspended" || this.ctx.state === "interrupted") {
         try {
           await this.ctx.resume();
         } catch (e) {}
@@ -75,10 +72,7 @@ export class GameAudio {
 
   async resumeIfNeeded() {
     if (!this.ctx) return;
-    if (
-      this.ctx.state === "suspended" ||
-      this.ctx.state === "interrupted"
-    ) {
+    if (this.ctx.state === "suspended" || this.ctx.state === "interrupted") {
       try {
         await this.ctx.resume();
       } catch (e) {}
@@ -169,7 +163,14 @@ export class GameAudio {
  * SFX (GameAudio), and mute state.
  */
 export class AudioManager {
-  constructor({ audioEl, isMobile, storage, muteMusic, muteSfx, visualEffects }) {
+  constructor({
+    audioEl,
+    isMobile,
+    storage,
+    muteMusic,
+    muteSfx,
+    visualEffects,
+  }) {
     this.audioEl = audioEl;
     this.storage = storage;
     this.audioStarted = false;

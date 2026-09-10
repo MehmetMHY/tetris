@@ -1,10 +1,14 @@
-const CACHE_NAME = "tetris-v42";
+const CACHE_NAME = "tetris-v43";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css",
+  "./styles/base.css",
+  "./styles/layout.css",
+  "./styles/components.css",
+  "./styles/animations.css",
   "./site.webmanifest",
   "./src/main.js",
+  "./src/cli.js",
   "./src/config/constants.js",
   "./src/config/pieces.js",
   "./src/config/timing.js",

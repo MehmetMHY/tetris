@@ -6,7 +6,15 @@ import { getSpeed } from "../config/timing.js";
  * The settings overlay doubles as the pause menu (same DOM element).
  */
 export class OverlayManager {
-  constructor({ engine, dom, hud, audioManager, storage, renderer, getHighScore }) {
+  constructor({
+    engine,
+    dom,
+    hud,
+    audioManager,
+    storage,
+    renderer,
+    getHighScore,
+  }) {
     this.engine = engine;
     this.dom = dom;
     this.hud = hud;
@@ -39,7 +47,10 @@ export class OverlayManager {
 
   highlightPauseBtn() {
     for (let i = 0; i < this.pauseMenuBtns.length; i++)
-      this.pauseMenuBtns[i].classList.toggle("selected", i === this.pauseMenuIdx);
+      this.pauseMenuBtns[i].classList.toggle(
+        "selected",
+        i === this.pauseMenuIdx,
+      );
   }
 
   pauseMenuUp() {
@@ -62,7 +73,10 @@ export class OverlayManager {
     this.dom.btnMuteMusic.textContent = this.audioManager.muteMusic
       ? "Unmute Music"
       : "Mute Music";
-    this.dom.btnMuteMusic.classList.toggle("active", this.audioManager.muteMusic);
+    this.dom.btnMuteMusic.classList.toggle(
+      "active",
+      this.audioManager.muteMusic,
+    );
     this.dom.btnMuteSfx.textContent = this.audioManager.muteSfx
       ? "Unmute SFX"
       : "Mute SFX";

@@ -1,10 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import {
-  Storage,
-  KEYS,
-  createMemoryStorage,
-} from "../src/platform/storage.js";
+import { Storage, KEYS, createMemoryStorage } from "../src/platform/storage.js";
 
 describe("storage", () => {
   test("getNumber returns stored number", () => {
@@ -23,9 +19,7 @@ describe("storage", () => {
   });
 
   test("getBool returns true only for 'true'", () => {
-    const s = new Storage(
-      createMemoryStorage({ "tetris-mute-music": "true" }),
-    );
+    const s = new Storage(createMemoryStorage({ "tetris-mute-music": "true" }));
     assert.equal(s.getBool(KEYS.MUTE_MUSIC), true);
   });
 

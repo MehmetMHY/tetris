@@ -23,7 +23,8 @@ export class LevelPicker {
 
   changeStartLevel(delta) {
     const newLevel =
-      ((this.getStartLevel() - 1 + delta + MAX_START_LEVEL) % MAX_START_LEVEL) + 1;
+      ((this.getStartLevel() - 1 + delta + MAX_START_LEVEL) % MAX_START_LEVEL) +
+      1;
     this.setStartLevel(newLevel);
     this.dom.startLevelEl.textContent = newLevel;
   }

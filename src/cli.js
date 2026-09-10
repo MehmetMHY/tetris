@@ -137,10 +137,7 @@ async function cmdDeploy() {
   runGit(["add", "--all"]);
 
   const editor = process.env.EDITOR || "vi";
-  const tmpFile = path.join(
-    os.tmpdir(),
-    `git_commit_msg_${process.pid}.txt`,
-  );
+  const tmpFile = path.join(os.tmpdir(), `git_commit_msg_${process.pid}.txt`);
   fs.writeFileSync(tmpFile, "");
 
   console.log("opening editor for commit message...");
@@ -194,7 +191,9 @@ function main() {
     process.exit(0);
   }
 
-  const flags = args.filter((a) => a === "-r" || a === "--run" || a === "-d" || a === "--deploy");
+  const flags = args.filter(
+    (a) => a === "-r" || a === "--run" || a === "-d" || a === "--deploy",
+  );
   const wantsRun = flags.some((a) => a === "-r" || a === "--run");
   const wantsDeploy = flags.some((a) => a === "-d" || a === "--deploy");
 
