@@ -23,12 +23,28 @@ const MIME = {
 };
 
 function findOpenPort(start = 8000, maxAttempts = 100) {
-  for (let port = start; port < start + maxAttempts; port++) {
-    const inUse = spawnSync("lsof", ["-i", `:${port}`], { stdio: "pipe" });
-    if (inUse.status !== 0) return port;
-  }
-  console.error("error: could not find an available port");
-  process.exit(1);
+  return new Promise((resolve, reject) => {
+    let port = start;
+
+    function tryPort() {
+      if (port >= start + maxAttempts) {
+        reject(new Error("could not find an available port"));
+        return;
+      }
+
+      const server = net.createServer();
+      server.once("error", () => {
+        port++;
+        tryPort();
+      });
+      server.once("listening", () => {
+        server.close(() => resolve(port));
+      });
+      server.listen(port);
+    }
+
+    tryPort();
+  });
 }
 
 function openBrowser(url) {
@@ -44,7 +60,13 @@ function openBrowser(url) {
 
 async function cmdRun() {
   process.chdir(ROOT_DIR);
-  const port = findOpenPort();
+  let port;
+  try {
+    port = await findOpenPort();
+  } catch {
+    console.error("error: could not find an available port");
+    process.exit(1);
+  }
   const url = `http://localhost:${port}`;
   console.log(`starting http server on ${url}`);
   console.log("press ctrl+c to stop the server");
