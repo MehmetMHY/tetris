@@ -1,4 +1,4 @@
-const CACHE_NAME = "tetris-v52";
+const CACHE_NAME = "tetris-v53";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const ASSETS = [
   "./assets/logo.png",
   "./assets/github.svg",
   "./assets/settings.svg",
+  "./assets/report.svg",
   "./assets/apple-touch-icon.png",
   "./assets/favicon-32x32.png",
   "./assets/favicon-16x16.png",
