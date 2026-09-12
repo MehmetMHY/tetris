@@ -89,11 +89,7 @@
       env(safe-area-inset-top, 0px),
       var(--ios-top-inset, 0px)
     );
-    padding-bottom: max(
-      6px,
-      env(safe-area-inset-bottom, 0px),
-      var(--ios-bottom-inset, 0px)
-    );
+    padding-bottom: 0;
     padding-left: max(6px, env(safe-area-inset-left, 0px));
     padding-right: max(6px, env(safe-area-inset-right, 0px));
     height: 100dvh;
