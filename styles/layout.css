@@ -75,7 +75,12 @@
     display: block;
     padding: 0;
     overflow: hidden; /* Prevent scrolling */
-    background: #18181b; /* Zinc-900: distinct from game background */
+    /* Pure black: the root canvas paints the ENTIRE webview (even areas
+       outside the layout viewport). On iOS 26 standalone web apps the
+       layout viewport is inset by the safe areas, leaving a strip at the
+       bottom that CSS layout can't reach — but the root background still
+       paints it. Black makes it merge with the board's black frame. */
+    background: #000;
   }
 
   .game-container {

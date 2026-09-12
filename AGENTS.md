@@ -140,7 +140,7 @@ node --check src/cli.js
 
 ## Service Worker And PWA Notes
 
-- `sw.js` uses a cache-first strategy and a versioned `CACHE_NAME` like `tetris-v47`.
+- `sw.js` uses a cache-first strategy and a versioned `CACHE_NAME` like `tetris-v48`.
 - Every `.js` module file and CSS file must be listed in the `ASSETS` array in `sw.js`. If you add a new module or stylesheet, update `ASSETS`.
 - If a change needs to reach existing offline/PWA users, bump `CACHE_NAME` in `sw.js`.
 - Do not run `npm run deploy` unless the user explicitly asks to deploy. It is interactive and can stage, commit, and push changes.
