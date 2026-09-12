@@ -9,20 +9,6 @@ export function setupIOS() {
   let lastTouchEnd = 0;
   let lastTouchStart = 0;
 
-  function updateAppHeight() {
-    document.documentElement.style.setProperty(
-      "--app-height",
-      `${window.innerHeight}px`,
-    );
-  }
-
-  updateAppHeight();
-  window.addEventListener("resize", updateAppHeight);
-  window.addEventListener("orientationchange", () =>
-    setTimeout(updateAppHeight, 100),
-  );
-  window.visualViewport?.addEventListener("resize", updateAppHeight);
-
   document.addEventListener(
     "dblclick",
     (e) => {

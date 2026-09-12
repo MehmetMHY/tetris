@@ -79,6 +79,12 @@
   }
 
   .game-container {
+    /* Pin to the actual visual bounds of the screen. On installed iOS PWAs,
+       viewport units (vh/dvh) leave a gap the size of the home-indicator
+       safe area at the bottom; a fixed element with inset:0 fills the real
+       screen (including safe areas, thanks to viewport-fit=cover). */
+    position: fixed;
+    inset: 0;
     display: grid;
     grid-template-columns: 1fr 1fr 2fr 1.2fr; /* 4 columns: Next, Hold, Score, Buttons */
     grid-template-rows: auto 1fr;
@@ -92,8 +98,6 @@
     padding-bottom: 0;
     padding-left: max(6px, env(safe-area-inset-left, 0px));
     padding-right: max(6px, env(safe-area-inset-right, 0px));
-    height: var(--app-height, 100dvh);
-    width: 100%; /* Changed from 100vw to prevent iOS overflow/cutoff */
     box-sizing: border-box;
     justify-content: stretch;
     align-items: stretch;
