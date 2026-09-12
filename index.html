@@ -86,6 +86,24 @@
         user-select: none;
       }
 
+      :root {
+        --app-height: 100svh;
+      }
+
+      button,
+      a {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+        outline: none;
+      }
+
+      button {
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
       html,
       body {
         touch-action: none;
@@ -101,7 +119,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: 100dvh;
+        min-height: var(--app-height, 100svh);
         overflow: hidden;
       }
 
@@ -150,7 +168,7 @@
           );
           padding-left: max(6px, env(safe-area-inset-left, 0px));
           padding-right: max(6px, env(safe-area-inset-right, 0px));
-          height: 100dvh;
+          height: var(--app-height, 100svh);
           width: 100%; /* Changed from 100vw to prevent iOS overflow/cutoff */
           box-sizing: border-box;
           justify-content: stretch;
@@ -365,7 +383,8 @@
         top: 0;
         left: 0;
         right: 0;
-        bottom: 0;
+        bottom: auto;
+        height: var(--app-height, 100svh);
         background: rgba(0, 0, 0, 0.75);
         display: flex;
         justify-content: center;
@@ -467,11 +486,9 @@
         text-decoration: none;
       }
 
-      .icon-link:hover,
-      .icon-link:focus {
+      .icon-link:hover {
         background: #3a3a6e;
         border-color: #88f;
-        outline: none;
       }
 
       .icon-link:active {
@@ -563,11 +580,9 @@
       }
 
       .menu-btn:hover,
-      .menu-btn:focus,
       .menu-btn.selected {
         background: #3a3a6e;
         border-color: #88f;
-        outline: none;
       }
 
       .button-group {
@@ -590,10 +605,8 @@
           border-color 0.15s;
       }
 
-      .settings-btn:hover,
-      .settings-btn:focus {
+      .settings-btn:hover {
         background: #3a3a6e;
-        outline: none;
       }
 
       #settings-overlay h2 {
@@ -607,7 +620,6 @@
       }
 
       .audio-toggle:hover,
-      .audio-toggle:focus,
       .audio-toggle.selected {
         background: #2a4a2a;
         border-color: #88f;
@@ -620,7 +632,6 @@
       }
 
       .audio-toggle.active:hover,
-      .audio-toggle.active:focus,
       .audio-toggle.active.selected {
         background: #5a3a3a;
         border-color: #88f;
@@ -668,11 +679,63 @@
           border-color 0.15s;
       }
 
-      .level-arrow:hover,
-      .level-arrow:focus {
+      .level-arrow:hover {
         background: #3a3a6e;
         border-color: #88f;
-        outline: none;
+      }
+
+      @media (hover: none), (pointer: coarse) {
+        .icon-link:hover,
+        .icon-link:focus {
+          background: #2a2a4e;
+          border-color: #555;
+        }
+
+        .icon-link:active {
+          transform: none;
+        }
+
+        .menu-btn:hover,
+        .menu-btn:focus,
+        .menu-btn.selected {
+          background: #2a2a4e;
+          border-color: #555;
+        }
+
+        .settings-btn:hover,
+        .settings-btn:focus {
+          background: #2a2a4e;
+          border-color: #555;
+        }
+
+        .box-buttons .settings-btn:hover,
+        .box-buttons .settings-btn:focus,
+        .box-buttons .settings-btn:active {
+          background: transparent;
+          color: #aaa;
+        }
+
+        .audio-toggle:hover,
+        .audio-toggle:focus,
+        .audio-toggle.selected {
+          background: #1a3a1a;
+          border-color: #4a4;
+          color: #6c6;
+        }
+
+        .audio-toggle.active:hover,
+        .audio-toggle.active:focus,
+        .audio-toggle.active.selected {
+          background: #4a2a2a;
+          border-color: #f66;
+          color: #f88;
+        }
+
+        .level-arrow:hover,
+        .level-arrow:focus {
+          background: #2a2a4e;
+          border-color: #555;
+        }
       }
     </style>
   </head>
@@ -945,6 +1008,22 @@
           /iPad|iPhone|iPod/.test(navigator.userAgent) ||
           (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
         if (isIOS) {
+          const setStableAppHeight = () => {
+            const height = window.innerHeight;
+            if (height > 0) {
+              document.documentElement.style.setProperty(
+                "--app-height",
+                `${height}px`,
+              );
+            }
+          };
+
+          setStableAppHeight();
+          window.addEventListener("pageshow", setStableAppHeight);
+          window.addEventListener("orientationchange", () => {
+            window.setTimeout(setStableAppHeight, 300);
+          });
+
           // Check if env(safe-area-inset-top) resolves to 0
           const test = document.createElement("div");
           test.style.paddingTop = "env(safe-area-inset-top, 0px)";
@@ -1175,6 +1254,20 @@
           startAudio();
         }
 
+        let uiActionLockedUntil = 0;
+        function runUiAction(e, action) {
+          if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.blur?.();
+          }
+
+          const now = performance.now();
+          if (now < uiActionLockedUntil) return;
+          uiActionLockedUntil = now + 180;
+          action();
+        }
+
         // Settings overlay
         const settingsOverlay = document.getElementById("settings-overlay");
         const btnMuteMusic = document.getElementById("btn-mute-music");
@@ -1192,31 +1285,35 @@
           btnVisualEffects.classList.toggle("active", !visualEffects);
         }
 
-        btnMuteMusic.addEventListener("click", () => {
-          btnMuteMusic.blur();
-          muteMusic = !muteMusic;
-          saveMuteState();
-        });
-        btnMuteSfx.addEventListener("click", () => {
-          btnMuteSfx.blur();
-          muteSfx = !muteSfx;
-          saveMuteState();
-        });
-        btnVisualEffects.addEventListener("click", () => {
-          btnVisualEffects.blur();
-          visualEffects = !visualEffects;
-          localStorage.setItem(
-            "tetris-visual-effects",
-            visualEffects ? "true" : "false",
-          );
-          updateAudioMenuLabels();
-        });
+        btnMuteMusic.addEventListener("click", (e) =>
+          runUiAction(e, () => {
+            muteMusic = !muteMusic;
+            saveMuteState();
+          }),
+        );
+        btnMuteSfx.addEventListener("click", (e) =>
+          runUiAction(e, () => {
+            muteSfx = !muteSfx;
+            saveMuteState();
+          }),
+        );
+        btnVisualEffects.addEventListener("click", (e) =>
+          runUiAction(e, () => {
+            visualEffects = !visualEffects;
+            localStorage.setItem(
+              "tetris-visual-effects",
+              visualEffects ? "true" : "false",
+            );
+            updateAudioMenuLabels();
+          }),
+        );
 
         const settingsBtn = document.getElementById("settings-btn");
-        settingsBtn.addEventListener("click", () => {
-          settingsBtn.blur();
-          if (started && !gameOver) togglePause();
-        });
+        settingsBtn.addEventListener("click", (e) =>
+          runUiAction(e, () => {
+            if (started && !gameOver) togglePause();
+          }),
+        );
 
         applyMute();
 
@@ -1698,13 +1795,11 @@
         }
 
         levelUpBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          changeStartLevel(1);
+          runUiAction(e, () => changeStartLevel(1));
         });
 
         levelDownBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          changeStartLevel(-1);
+          runUiAction(e, () => changeStartLevel(-1));
         });
 
         // ─── Particle System ───
@@ -2806,24 +2901,29 @@
         // Pause menu buttons
         document
           .getElementById("btn-resume")
-          .addEventListener("click", resumeGame);
-        document.getElementById("btn-restart").addEventListener("click", () => {
-          pauseOverlay.classList.add("hidden");
-          paused = false;
-          startGame();
-        });
+          .addEventListener("click", (e) => runUiAction(e, resumeGame));
+        document
+          .getElementById("btn-restart")
+          .addEventListener("click", (e) =>
+            runUiAction(e, () => {
+              pauseOverlay.classList.add("hidden");
+              paused = false;
+              startGame();
+            }),
+          );
         document
           .getElementById("btn-quit")
-          .addEventListener("click", quitToTitle);
+          .addEventListener("click", (e) => runUiAction(e, quitToTitle));
 
         document
           .getElementById("start-settings-btn")
           .addEventListener("click", (e) => {
-            e.stopPropagation();
-            document.getElementById("btn-resume").textContent = "Back";
-            updateAudioMenuLabels();
-            highlightPauseBtn();
-            pauseOverlay.classList.remove("hidden");
+            runUiAction(e, () => {
+              document.getElementById("btn-resume").textContent = "Back";
+              updateAudioMenuLabels();
+              highlightPauseBtn();
+              pauseOverlay.classList.remove("hidden");
+            });
           });
 
         // ─── Game loop ───
@@ -2975,13 +3075,17 @@
         startOverlay.addEventListener("click", (e) => {
           // Existing buttons have stopPropagation, but just in case
           if (e.target.closest(".level-selector, .icon-link")) return;
-          if (!started) startGame();
+          runUiAction(e, () => {
+            if (!started) startGame();
+          });
         });
 
         gameoverOverlay.addEventListener("click", (e) => {
-          if (gameOver) {
-            quitToTitle();
-          }
+          runUiAction(e, () => {
+            if (gameOver) {
+              quitToTitle();
+            }
+          });
         });
 
         // Initial draw
