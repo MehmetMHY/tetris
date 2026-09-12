@@ -62,15 +62,15 @@ The problem was that there was no version that fit how I wanted to play. Mobile 
 From the project directory run
 
 ```bash
-npm run serve
+python3 cli.py -r
 ```
 
-_Starts a local Node HTTP server and opens the game in your browser. You can also open `index.html` directly in a browser._
+_Starts a local Python HTTP server and opens the game in your browser. You can also open `index.html` directly in a browser._
 
 To bump the Service Worker cache version, commit, and push:
 
 ```bash
-npm run deploy
+python3 cli.py -d
 ```
 
 ## Speed Tuning & Game Theory
@@ -83,16 +83,13 @@ Based on all of this, the speed curve here caps gravity at 33ms per row (similar
 
 ## Implementation Notes
 
-- Dependency-free: no bundler, no transpiler, no runtime libraries
-- Modular ES module architecture (`src/`) with a pure, testable game engine
-- Unit tests using Node's built-in test runner (`npm test`), covering engine logic, timing, pieces, and storage
 - Responsive design optimized for both Desktop and Mobile (portrait)
 - Pre-rendered block sprites and grid background for performance
 - Uses Super Rotation System (SRS) style wall kicks for piece rotation
 - Velocity-based touch gesture detection for reliable flick vs drag distinction
 - Level-based timing system for gravity speed and lock delay
 - High scores and audio settings persisted with `localStorage`
-- To push updates to offline/PWA users, run `npm run deploy` which bumps `CACHE_NAME` in `sw.js`, stages changes, and commits/pushes in one step
+- To push updates to offline/PWA users, run `python3 cli.py -d` which bumps `CACHE_NAME` in `sw.js`, stages changes, and commits/pushes in one step
 - Assets (icons, audio) live in the `assets/` directory
 - Background music source [NmCCQxVBfyM](https://www.youtube.com/watch?v=NmCCQxVBfyM)
 - Line clear sound effect source [UMViM2tHrOk](https://www.youtube.com/watch?v=UMViM2tHrOk)

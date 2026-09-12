@@ -1,6 +1,7 @@
 .DS_Store
 .env*
-node_modules/
+venv/
+env/
 .claude/
 .gemini/
 ch_*
@@ -8,5 +9,4 @@ ch_*
 tmp_*
 *meme*
 *task*
-session-*.md
-session-*.sh
+__pycache__/
