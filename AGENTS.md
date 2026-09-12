@@ -59,7 +59,7 @@ Manual smoke test checklist for gameplay changes:
 
 ## Service Worker And PWA Notes
 
-- `sw.js` uses a cache-first strategy and a versioned `CACHE_NAME` like `tetris-v50`.
+- `sw.js` uses a cache-first strategy and a versioned `CACHE_NAME` like `tetris-v52`.
 - If you add, remove, rename, or replace cached assets, update the `ASSETS` array in `sw.js`.
 - If a change needs to reach existing offline/PWA users, bump `CACHE_NAME` in `sw.js`.
 - Do not run `python3 cli.py -d` unless the user explicitly asks to deploy. It is interactive and can stage, commit, and push changes.
