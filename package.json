@@ -1,0 +1,12 @@
+{
+  "name": "tetris",
+  "version": "1.0.0",
+  "description": "Dependency-free static browser Tetris game and PWA",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "serve": "node src/cli.js -r",
+    "deploy": "node src/cli.js -d"
+  }
+}
