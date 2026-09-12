@@ -57,6 +57,29 @@ Manual smoke test checklist for gameplay changes:
 - Keep localStorage keys stable unless there is a concrete migration need. Existing keys include `tetris-high-score`, `tetris-mute-music`, `tetris-mute-sfx`, and `tetris-visual-effects`.
 - Do not add generated files, temporary files, dependency directories, or local tool config to the repo.
 
+## Anti-Over-Engineering Warning
+
+This project was fully refactored once (ES modules, split CSS/JS, 166 unit tests, Node CLI) and then reverted entirely because it broke mobile/iOS behavior and introduced regressions that didn't exist before. That refactor happened on Sep 12, 2026, wasted 2-3 hours of the user's time, and burned $28 in AI API credits — for zero benefit. The user was frustrated and had to manually revert everything.
+
+**This is a personal project, not a commercial product.** The single-file `index.html` + `AGENTS.md` architecture is intentional and correct. "Working and simple" is the goal, not "architecturally pure." Not everything the user makes has to be maintained like a real business or money-making Apple-like product.
+
+If the user asks for any of the following, **pause and warn them before proceeding**:
+
+- Splitting `index.html` into separate CSS/JS files or ES modules
+- Adding a build system, bundler, transpiler, or `package.json`
+- Adding a test framework or automated test suite
+- Introducing any dependency, library, or framework
+- Large-scale refactors that restructure the working codebase
+
+The warning should remind the user that:
+
+- The app works as-is and the current architecture is deliberate
+- A previous refactor was fully reverted after breaking things
+- Small, targeted fixes are preferred over structural changes
+- They can still proceed if they want to, but they should know the risk
+
+Do not block the user. Just warn, then follow their decision.
+
 ## Service Worker And PWA Notes
 
 - `sw.js` uses a cache-first strategy and a versioned `CACHE_NAME` like `tetris-v53`.
